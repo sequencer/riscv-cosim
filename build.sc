@@ -26,3 +26,15 @@ trait RVCosim
 
   def chiselPluginIvy = Some(v.chiselPlugin)
 }
+
+object darkriscv extends Darkriscv
+
+trait Darkriscv
+  extends common.HasRVCosimModule
+    with ScalafmtModule {
+  override def scalaVersion = T(v.scala)
+
+  override def millSourcePath = os.pwd / "darkriscv"
+
+  def rvcosimModule = rvcosim
+}

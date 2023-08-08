@@ -26,3 +26,18 @@ trait HasChisel
 
 trait RVCosimModule
   extends HasChisel
+
+trait HasRVCosimModule
+  extends HasChisel {
+  def rvcosimModule: RVCosimModule
+
+  override def moduleDeps = super.moduleDeps ++ Some(rvcosimModule)
+
+  def chiselModule: Option[ScalaModule] = rvcosimModule.chiselModule
+
+  def chiselPluginJar: T[Option[PathRef]] = rvcosimModule.chiselPluginJar
+
+  def chiselIvy: Option[Dep] = rvcosimModule.chiselIvy
+
+  def chiselPluginIvy: Option[Dep] = rvcosimModule.chiselPluginIvy
+}
