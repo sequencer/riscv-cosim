@@ -15,6 +15,8 @@
         let
           pkgs = import nixpkgs { inherit system; overlays = [ overlay ]; };
           deps = with pkgs; [
+            mill
+	    circt
             gnused
             coreutils
             gnumake
