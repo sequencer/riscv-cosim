@@ -2,11 +2,10 @@ package cosim
 
 import chisel3._
 import chisel3.experimental.ExtModule
-import chisel3.probe._
 import chisel3.util.HasExtModuleInline
 
 case class CosimParameter(clockRate: Int)
-class Cosim(dut: => Core) extends RawModule {
+class Cosim(dut: => Core) extends RawModule with ProbeModule {
   // instantiate the RISC-V Core
   val dutInstance = Module(dut)
   def parameter = CosimParameter(
@@ -14,8 +13,8 @@ class Cosim(dut: => Core) extends RawModule {
   )
   val verbatim = Module(new ExtModule with HasExtModuleInline {
     override val desiredName = "Verbatim"
-    val clock = IO(Output(Probe(Clock())))
-    val reset = IO(Output(Probe(Bool())))
+    val clock = IO(Output(Clock()))
+    val reset = IO(Output(Bool()))
     setInline("verbatim.sv",
       s"""module Verbatim(
          |  output clock,
@@ -39,4 +38,7 @@ class Cosim(dut: => Core) extends RawModule {
   dutInstance.instructionFetch.response.bits.data := DontCare
   dutInstance.loadStore.response.valid := true.B
   dutInstance.loadStore.response.bits.data := DontCare
+
+  // hack
+  done()
 }
