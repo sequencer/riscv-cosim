@@ -172,14 +172,16 @@ object RunDarkRISCV extends App {
   // verilator
   // todo: copy from resource dir to verilator dir
   val allCSourceFiles = Seq(
-    "empty.c"
+    "bridge.cc",
+    "dpi.cc"
   ).map { f =>
     os.write.over(emulatorCSrc / f, os.read(resources / f))
     emulatorCSrc / f
   }
 
   val allCHeaderFiles = Seq(
-    "empty.h"
+    "bridge.h",
+    "glog.h"
   ).map { f =>
     os.write.over(emulatorCHeader / f, os.read(resources / f))
     emulatorCHeader / f

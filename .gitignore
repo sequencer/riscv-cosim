@@ -1,4 +1,5 @@
-.bsp
-.idea
-out
-run
+.bsp/
+.idea/
+out/
+run/
+.vscode/
