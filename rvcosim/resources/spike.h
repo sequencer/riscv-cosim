@@ -13,8 +13,11 @@ public:
 private:
   /* We want to have maximum flexibility, so we use raw processor_t and do
    * everything else ourselves. */
-  processor_t processor;
+  Sim sim;
   isa_parser_t isa_parser;
   cfg_t cfg;
-  Sim sim;
+  processor_t processor;
 };
+
+// Write this CSR to end simulation.
+constexpr uint32_t CSR_MSIMEND = 0x7cc;

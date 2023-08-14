@@ -9,7 +9,7 @@ Spike::Spike()
           nullptr,                            /* default_bootargs */
           DEFAULT_ISA,                        /* default_isa */
           DEFAULT_PRIV,                       /* default_priv */
-          "",                                 /* default_varch */
+          DEFAULT_VARCH,                      /* default_varch */
           false,                              /* default_misaligned */
           endianness_little,                  /* default_endianness */
           16,                                 /* default_pmpregions */
@@ -26,9 +26,14 @@ Spike::Spike()
                 nullptr,     /* log_file_t */
                 std::cerr    /* sout */
       ) {
-  LOG(INFO) << fmt::format("[spike][isa] isa: {}", env("COSIM_isa"));
+  /* Initialize processor state, read elf into sim, setup entrypoint. */
+  LOG(INFO) << fmt::format("[spike][isa] read isa string: {}",
+                           env("COSIM_isa"));
+  auto &csrmap = processor.get_state()->csrmap;
+  csrmap[CSR_MSIMEND] =
+      std::make_shared<basic_csr_t>(&processor, CSR_MSIMEND, 0);
+  processor.enable_log_commits();
 
-  /* Reset processor state, read elf into sim, setup entrypoint. */
   processor.reset();
   uint64_t entry;
   auto elfpath = std::string(env("COSIM_elf"));

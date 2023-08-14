@@ -22,13 +22,17 @@
 class Bridge {
 public:
   Bridge() {}
+  ~Bridge() { delete spike; }
   void terminate() { terminated = true; }
 
-  void init() { ctx = Verilated::threadContextp(); }
+  void init() {
+    ctx = Verilated::threadContextp();
+    spike = new Spike();
+  }
   uint64_t cycle() { return ctx->time(); }
 
 private:
   bool terminated = false;
   VerilatedContext *ctx = nullptr;
-  Spike spike;
+  Spike *spike = nullptr;
 };

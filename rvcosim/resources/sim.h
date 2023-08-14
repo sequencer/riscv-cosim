@@ -35,7 +35,7 @@ public:
     LOG(FATAL_S) << "unreachable";
   }
 
-  void proc_reset(unsigned id) override { LOG(FATAL_S) << "unreachable"; }
+  void proc_reset(unsigned id) override {}
 
   const char *get_symbol(uint64_t addr) override {
     LOG(FATAL_S) << "unreachable";
