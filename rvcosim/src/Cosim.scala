@@ -10,6 +10,8 @@ class Cosim(dut: => Core) extends RawModule {
   def parameter = CosimParameter(clockRate = 2)
 
   val clockGen = Module(new ClockGen(ClockGenParameter(parameter.clockRate)))
+  val dpiInitCosim = Module(new dpiInitCosim)
+  val dpiTimeoutCheck = Module(new dpiTimeoutCheck(dpiTimeoutCheckParameter(parameter.clockRate)))
 
   val clock = read(clockGen.clock)
   val reset = read(clockGen.reset)
