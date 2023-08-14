@@ -3,18 +3,21 @@
 #include "bridge.h"
 #include "glog.h"
 
-#define BRIDGE_API extern "C"
+#define DPI extern "C"
+
+#define dpi_init_cosim dpiInitCosim
+#define dpi_timeout_check dpiTimeoutCheck
 
 static Bridge bridge = Bridge();
 
 void sigint_handler(int s) { bridge.terminate(); }
 
-BRIDGE_API void dpiInitCosim() {
-  LOG(INFO) << fmt::format("dpi_init_cosim");
-
+DPI void dpi_init_cosim() {
   std::signal(SIGINT, sigint_handler);
   google::InitGoogleLogging("emulator");
   bridge.init();
+
+  LOG(INFO) << fmt::format("[bridge] @{} initialized", bridge.cycle());
 }
 
-BRIDGE_API void dpiTimeoutCheck() { exit(1); }
+DPI void dpi_timeout_check() { exit(1); }

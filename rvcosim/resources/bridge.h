@@ -5,6 +5,7 @@
 #include <verilated_cov.h>
 
 #include "glog.h"
+#include "spike.h"
 
 #define TRY(statement)                                                         \
   try {                                                                        \
@@ -17,8 +18,10 @@
         e.what());                                                             \
   }
 
+/* A bridge between Spike and DPI. */
 class Bridge {
 public:
+  Bridge() {}
   void terminate() { terminated = true; }
 
   void init() { ctx = Verilated::threadContextp(); }
@@ -26,6 +29,6 @@ public:
 
 private:
   bool terminated = false;
-
   VerilatedContext *ctx = nullptr;
+  Spike spike;
 };
