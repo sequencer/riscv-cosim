@@ -5,6 +5,7 @@ import chisel3.experimental.ExtModule
 import chisel3.util.{HasExtModuleInline, HasExtModuleResource}
 import firrtl.stage.FirrtlCircuitAnnotation
 import rvcosim._
+import chisel3.probe._
 
 class DarkRISCVParameter extends CoreParameter {
   override val ifAddressWidth: Int = 32
@@ -31,10 +32,16 @@ class DarkRISCVWrapper extends Core {
   loadStore.request.valid := darkriscv.wr || darkriscv.rd
   // dontcare darkriscv.idle
   // dontcare debug
+  define(rfWriteValid, darkriscv.rfWriteValid)
+  define(rfWriteData, darkriscv.rfWriteData)
+  define(rfWriteAddress, darkriscv.rfWriteAddress)
+  define(rfWriteFp, RWProbeValue(WireDefault(false.B)))
+  define(rfWriteVector, RWProbeValue(WireDefault(false.B)))
 }
 
 class DarkRISCV extends ExtModule
   with HasExtModuleResource
+  with HasExtModuleDefine
   with HasExtModuleInline {
   override def desiredName: String = "darkriscv"
   /* input             CLK,   // clock */
@@ -63,6 +70,13 @@ class DarkRISCV extends ExtModule
   val idle = IO(Output(Bool())).suggestName("IDLE")
   /* output [3:0]  DEBUG       // old-school osciloscope based debug! :) */
   val debug = IO(Output(UInt(4.W))).suggestName("DEBUG")
+
+  // XMR
+  val rfWriteValid = define(RWProbe(Bool()), Seq("darkriscv", "darkriscv", "XRES"))
+  val rfWriteAddress = define(RWProbe(UInt(5.W)), Seq("darkriscv", "darkriscv", "DPTR"))
+  val rfWriteData = define(RWProbe(UInt(32.W)), Seq("darkriscv", "darkriscv", "XIDATA"))
+
+
   setInline(
     "config.v",
     """//`define __3STAGE__
@@ -154,6 +168,7 @@ object RunDarkRISCV extends App {
     "--split-verilog",
     "--preserve-values=none",
     "--preserve-aggregate=all",
+    "--strip-debug-info",
     s"-o=$rtlDir"
   ).call()
   val verilogs = os.read.lines(rtlDir / "filelist.f")

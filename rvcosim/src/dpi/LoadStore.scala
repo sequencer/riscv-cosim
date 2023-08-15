@@ -7,7 +7,7 @@ case class LoadStoreParameter(addressWidth: Int, dataWidth: Int)
 
 class LoadStore(p: LoadStoreParameter) extends DPIModule {
   val isImport: Boolean = true
-  val clock = dpiTrigger("clock", RWProbe(Clock()))
+  val clock = dpiTrigger("clock", RWProbe(Bool()))
   val requestValid = dpiTrigger("valid", RWProbe(Bool()))
   val address = dpiIn("address", RWProbe(UInt(p.addressWidth.W)))
   val storeData = dpiIn("storeData", RWProbe(UInt(p.dataWidth.W)))

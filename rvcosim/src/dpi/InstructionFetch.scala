@@ -7,7 +7,7 @@ case class InstructionFetchParameter(addressWidth: Int, dataWidth: Int)
 
 class InstructionFetch(p: InstructionFetchParameter) extends DPIModule {
   val isImport: Boolean = true
-  val clock = dpiTrigger("clock", RWProbe(Clock()))
+  val clock = dpiTrigger("clock", RWProbe(Bool()))
   val requestValid = dpiTrigger("requestValid", RWProbe(Bool()))
   val address = dpiIn("address", RWProbe(UInt(p.addressWidth.W)))
   val data = dpiIn("data", Probe(UInt(p.dataWidth.W)))
