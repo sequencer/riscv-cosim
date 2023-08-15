@@ -2,6 +2,7 @@ package rvcosim
 
 import chisel3._
 import chisel3.probe._
+import rvcosim.dpi._
 
 case class CosimParameter(clockRate: Int)
 class Cosim(dut: => Core) extends RawModule {
@@ -33,7 +34,6 @@ class Cosim(dut: => Core) extends RawModule {
   forceInitial(dpiLoadStore.writeEnable.ref, read(ProbeValue(dutInstance.loadStore.request.bits.writeEnable)))
   forceInitial(dpiLoadStore.maskByte.ref, read(ProbeValue(dutInstance.loadStore.request.bits.maskByte)))
   forceInitial(dpiLoadStore.storeData.ref, read(ProbeValue(dutInstance.loadStore.request.bits.data)))
-
   dutInstance.loadStore.response.valid := read(dpiLoadStore.responseValid.ref)
   dutInstance.loadStore.response.bits.data := read(dpiLoadStore.loadData.ref)
 }

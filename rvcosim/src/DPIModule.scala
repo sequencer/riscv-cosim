@@ -1,3 +1,4 @@
+// magic to hack into generateComponent
 package chisel3
 
 import chisel3.experimental.ExtModule
@@ -15,6 +16,12 @@ abstract class DPIModule
   extends ExtModule
     with HasExtModuleInline
     with HasExtModuleDefine {
+  def dpiIn[T <: Element](name: String, data: T) = bind(name, false, true, data)
+
+  def dpiOut[T <: Element](name: String, data: T) = bind(name, true, true, data)
+
+  def dpiTrigger[T <: Element](name: String, data: T) = bind(name, false, false, data)
+
   val isImport: Boolean
   val references: ArrayBuffer[DPIElement[_]] = scala.collection.mutable.ArrayBuffer.empty[DPIElement[_]]
   val dpiReferences: ArrayBuffer[DPIElement[_]] = scala.collection.mutable.ArrayBuffer.empty[DPIElement[_]]
@@ -31,8 +38,7 @@ abstract class DPIModule
     DPIReference(name, ref)
   }
 
-
-  val body: String
+  val trigger: String = ""
 
   // Magic to execute post-hook
   private[chisel3] override def generateComponent() = {
@@ -45,7 +51,7 @@ abstract class DPIModule
         }
         val localDefinitionTpe = if (width != 1) s"[${width - 1}:0] " else ""
         s"logic $localDefinitionTpe$name"
-    }.mkString(";\n")
+    }.mkString("; ")
 
     val dpiArg = dpiReferences.map {
       case DPIElement(name, output, element) =>
@@ -56,16 +62,14 @@ abstract class DPIModule
         }
         val functionParameterTpe = if (width != 1) s"bit[${width - 1}:0] " else ""
         s"$direction$functionParameterTpe$name"
-    }.mkString(",\n")
+    }.mkString(", ")
 
     setInline(
       s"$desiredName.sv",
       s"""module $desiredName;
          |${if (localDefinition.isEmpty) "" else localDefinition + ";"}
-         |${if (isImport) """import "DPI-C" function void""" else """export "DPI-C" function"""} $desiredName(
-         |$dpiArg
-         |);
-         |$body
+         |${if (isImport) s"""import "DPI-C" function void $desiredName($dpiArg);""" }
+         |$trigger $desiredName(${dpiReferences.map(_.name).mkString(", ")});
          |endmodule
          |""".stripMargin
     )
