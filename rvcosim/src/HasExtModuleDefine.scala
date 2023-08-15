@@ -9,12 +9,12 @@ trait HasExtModuleDefine extends chisel3.util.HasExtModuleInline { this: chisel3
     */
   def define[T <: chisel3.Element](tpe: T, path: Seq[String]): T = {
     setInline(
-      s"firrtl_abi_definition_${path.mkString("_")}.sv",
+      s"ref_${path.mkString("_")}.sv",
       s"`define ref_${path.mkString("_")} ${path.last}"
     )
     // it's not IO, but BlackBox can only bind IO
     val io = IO(tpe).suggestName(path.last)
-    require(chisel3.reflect.DataMirror.hasProbeTypeModifier(io), "tpe should be a ProbeType")
+    require(chisel3.reflect.DataMirror.hasProbeTypeModifier(io), s"$tpe for $path should be a ProbeType")
     io
   }
 }

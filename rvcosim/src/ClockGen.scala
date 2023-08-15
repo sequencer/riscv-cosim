@@ -20,6 +20,6 @@ class ClockGen(val parameter: ClockGenParameter)
        |endmodule
        |""".stripMargin
   )
-  val clock = define(Output(Probe(Clock())), Seq("ClockGen", "ClockGen", "clock"))
-  val reset = define(Output(Probe(Bool())), Seq("ClockGen", "ClockGen", "reset"))
+  val clock = define(Probe(Clock()), Seq("ClockGen", "ClockGen", "clock"))
+  val reset = define(Probe(Bool()), Seq("ClockGen", "ClockGen", "reset"))
 }

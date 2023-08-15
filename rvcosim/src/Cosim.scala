@@ -12,14 +12,19 @@ class Cosim(dut: => Core) extends RawModule {
   val clockGen = Module(new ClockGen(ClockGenParameter(parameter.clockRate)))
   val dpiInitCosim = Module(new dpiInitCosim)
   val dpiTimeoutCheck = Module(new dpiTimeoutCheck(dpiTimeoutCheckParameter(parameter.clockRate)))
+  val dpiInstructionFetch = Module(new dpiInstructionFetch(dpiInstructionFetchParameter(dutInstance.parameter.ifAddressWidth, dutInstance.parameter.ifDataWidth)))
 
   val clock = read(clockGen.clock)
   val reset = read(clockGen.reset)
   dutInstance.clock := read(clockGen.clock)
   dutInstance.reset := read(clockGen.reset)
 
-  dutInstance.instructionFetch.response.valid := true.B
-  dutInstance.instructionFetch.response.bits.data := DontCare
+  forceInitial(dpiInstructionFetch.ref("valid"), read(ProbeValue(dutInstance.instructionFetch.request.valid)))
+  forceInitial(dpiInstructionFetch.ref("clock"), clock)
+  forceInitial(dpiInstructionFetch.ref("address"), read(ProbeValue(dutInstance.instructionFetch.request.bits.address)))
+  dutInstance.instructionFetch.response.bits.data := read(dpiInstructionFetch.ref("data"))
+  dutInstance.instructionFetch.response.valid := read(dpiInstructionFetch.ref("ready"))
+
   dutInstance.loadStore.response.valid := true.B
   dutInstance.loadStore.response.bits.data := DontCare
 }
