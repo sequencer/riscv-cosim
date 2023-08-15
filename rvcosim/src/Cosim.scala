@@ -17,6 +17,7 @@ class Cosim(dut: => Core) extends RawModule {
   val dpiTimeoutCheck = Module(new TimeoutCheck(TimeoutCheckParameter(parameter.clockRate)))
   val dpiInstructionFetch = Module(new InstructionFetch(InstructionFetchParameter(dutInstance.parameter.ifAddressWidth, dutInstance.parameter.ifDataWidth)))
   val dpiLoadStore = Module(new LoadStore(LoadStoreParameter(dutInstance.parameter.ifAddressWidth, dutInstance.parameter.ifDataWidth)))
+  val dpiCSRWrite = Module(new CSRWrite)
 
   val clock = read(clockGen.clock)
   val reset = read(clockGen.reset)
@@ -36,4 +37,11 @@ class Cosim(dut: => Core) extends RawModule {
   forceInitial(dpiLoadStore.storeData.ref, read(ProbeValue(dutInstance.loadStore.request.bits.data)))
   dutInstance.loadStore.response.valid := read(dpiLoadStore.responseValid.ref)
   dutInstance.loadStore.response.bits.data := read(dpiLoadStore.loadData.ref)
+
+  define(dpiCSRWrite.clock.ref, clockGen.clock)
+  define(dpiCSRWrite.writeValid.ref, dutInstance.csrWriteValid)
+  define(dpiCSRWrite.isFp.ref, dutInstance.csrWriteFp)
+  define(dpiCSRWrite.isVector.ref, dutInstance.csrWriteVector)
+  define(dpiCSRWrite.data.ref, dutInstance.csrWriteData)
+  define(dpiCSRWrite.address.ref, dutInstance.csrWriteAddress)
 }

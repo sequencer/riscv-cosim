@@ -2,6 +2,7 @@ package rvcosim
 
 import chisel3._
 import chisel3.util.Valid
+import chisel3.probe._
 
 trait CoreParameter {
   val ifAddressWidth: Int
@@ -45,4 +46,9 @@ abstract class Core extends RawModule {
   val reset: Reset = IO(Input(Reset()))
   val instructionFetch = IO(new IFBundle(parameter))
   val loadStore = IO(new LSUBundle(parameter))
+  val csrWriteValid = IO(RWProbe(Output(Bool())))
+  val csrWriteFp = IO(RWProbe(Output(Bool())))
+  val csrWriteVector = IO(RWProbe(Output(Bool())))
+  val csrWriteData = IO(RWProbe(Output(UInt(32.W))))
+  val csrWriteAddress = IO(RWProbe(Output(UInt(chisel3.util.log2Ceil(32).W))))
 }

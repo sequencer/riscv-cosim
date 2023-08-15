@@ -154,6 +154,7 @@ object RunDarkRISCV extends App {
     "--split-verilog",
     "--preserve-values=none",
     "--preserve-aggregate=all",
+    "--strip-debug-info",
     s"-o=$rtlDir"
   ).call()
   val verilogs = os.read.lines(rtlDir / "filelist.f")
