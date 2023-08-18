@@ -45,7 +45,7 @@ abstract class DPIModule
   }
 
   val trigger: String = ""
-
+  val exportBody: String = ""
   // Magic to execute post-hook
   private[chisel3] override def generateComponent() = {
     // return binding function and probe signals
@@ -74,10 +74,11 @@ abstract class DPIModule
       s"$desiredName.sv",
       s"""module $desiredName;
          |${if (localDefinition.isEmpty) "" else localDefinition + ";"}
-         |${if (isImport) s"""import "DPI-C" function void $desiredName($dpiArg);""" }
-         |$trigger $desiredName(${dpiReferences.map(_.name).mkString(", ")});
+         |${if (isImport) s"""import "DPI-C" function void $desiredName($dpiArg);""" else s"""export "DPI-C" function $desiredName;"""}
+         |${if (isImport) s"""$trigger $desiredName(${dpiReferences.map(_.name).mkString(", ")});""" else ""}
+         |${if (!isImport) exportBody else ""}
          |endmodule
-         |""".stripMargin
+         |""".stripMargin.lines().filter(_.nonEmpty).toArray.mkString("\n")
     )
     super.generateComponent()
   }
