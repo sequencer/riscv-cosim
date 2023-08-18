@@ -16,9 +16,10 @@ DPI void instruction_fetch(IN svBitVecVal /* <32> */ *addr,
                            OUT svBit *resp_valid) {
 
   LOG(INFO) << fmt::format("[dpi]\t @{} rtl did an instruction fetch at "
-                           "address 0x{:04X}, got 0x{:04X}.",
+                           "address 0x{:08X}, got 0x{:08X}.",
                            bridge.cycle(), (uint32_t)*addr, (uint32_t)*data);
-  LOG(INFO) << fmt::format("[dpi]\t TODO: check it.");
+
+  bridge.check_if_and_record_commitlog((uint32_t)*addr, (uint32_t)*data);
 }
 
 DPI void load_store(IN svBitVecVal /* 32 */ *addr,
@@ -28,7 +29,7 @@ DPI void load_store(IN svBitVecVal /* 32 */ *addr,
 
   const char *action = (bool)write_enable ? "write to" : "read from";
   LOG(INFO) << fmt::format(
-      "[dpi]\t @{} rtl wants to {} memory at address 0x{:04X}", bridge.cycle(),
+      "[dpi]\t @{} rtl wants to {} memory at address 0x{:08X}", bridge.cycle(),
       action, (uint32_t)*addr);
 
   if (write_enable)
@@ -47,7 +48,7 @@ DPI void reg_file_write(IN svBit is_fp, IN svBit is_vector,
   const uint32_t d = (uint32_t)*data;
 
   LOG(INFO) << fmt::format(
-      "[dpi]\t @{} rtl wants to write {}#{} with data: 0x{:04X}",
+      "[dpi]\t @{} rtl wants to write {}#{} with data: 0x{:08X}",
       bridge.cycle(), reg_class_name(rc), n, d);
   bridge.reg_write(rc, n, d);
 }

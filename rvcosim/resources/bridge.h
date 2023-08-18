@@ -54,6 +54,7 @@ public:
   /* --- bridges --- */
   void reg_write(RegClass rc, int n, uint32_t data);
   void mem_read(uint32_t addr, uint32_t *out);
+  void check_if_and_record_commitlog(uint32_t addr, uint32_t raw_insn);
 
 private:
   bool terminated = false;

@@ -1,5 +1,7 @@
-#include "spike.h"
+#include <disasm.h>
+
 #include "elfloader.h"
+#include "spike.h"
 #include "utils.h"
 
 /* FIXME: make this configurable at runtime (?) */
@@ -73,7 +75,29 @@ Spike::Spike()
 
 void Spike::mem_read(uint32_t addr, uint32_t *out) {
   *out = *(uint32_t *)sim.addr_to_mem(addr);
-  LOG(INFO) << fmt::format("[spike]\t spike read memory at 0x{:04X}, responsed "
-                           "with data 0x{:04X}.",
+  LOG(INFO) << fmt::format("[spike]\t spike read memory at 0x{:08X}, responsed "
+                           "with data 0x{:08X}.",
                            addr, *out);
+}
+
+void Spike::check_if_and_record_commitlog(uint32_t addr, uint32_t raw_insn) {
+  auto spike_state = processor.get_state();
+  reg_t spike_pc = spike_state->pc;
+  auto spike_fetch = processor.get_mmu()->load_insn(spike_pc);
+  uint32_t spike_raw_insn = spike_fetch.insn.bits();
+
+  CHECK_S(spike_raw_insn == raw_insn) << fmt::format(
+      "spike fetched 0x{:08X} while rtl fetched 0x{:08X}:\n"
+      "> {:08X}\t{}\n"
+      "< {:08X}\t{}\n",
+      spike_raw_insn, raw_insn, spike_raw_insn,
+      processor.get_disassembler()->disassemble(spike_fetch.insn), raw_insn,
+      processor.get_disassembler()->disassemble(insn_t(raw_insn)));
+
+  /* TODO: record commit log. */
+
+  /* clear processor state. */
+  spike_state->log_reg_write.clear();
+  spike_state->log_mem_read.clear();
+  spike_state->log_mem_write.clear();
 }
