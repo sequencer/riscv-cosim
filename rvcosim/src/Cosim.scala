@@ -2,6 +2,7 @@ package rvcosim
 
 import chisel3._
 import chisel3.probe._
+import chisel3.util.experimental.BoringUtils.tapAndRead
 import rvcosim.dpi._
 
 case class CosimParameter(clockRate: Int)
@@ -27,25 +28,26 @@ class Cosim(dut: => Core) extends RawModule {
   dutInstance.clock := read(clockGen.clock).asClock
   dutInstance.reset := read(clockGen.reset)
 
-  forceInitial(dpiInstructionFetch.clock.ref, clock)
-  forceInitial(dpiInstructionFetch.requestValid.ref, read(ProbeValue(dutInstance.instructionFetch.request.valid)))
-  forceInitial(dpiInstructionFetch.address.ref, read(ProbeValue(dutInstance.instructionFetch.request.bits.address)))
-  dutInstance.instructionFetch.response.bits.data := read(dpiInstructionFetch.data.ref)
-  dutInstance.instructionFetch.response.valid := read(dpiInstructionFetch.responseValid.ref)
+  dpiInstructionFetch.clock.ref := clock
+  dpiInstructionFetch.requestValid.ref := tapAndRead(dutInstance.instructionFetch.request.valid)
+  dpiInstructionFetch.address.ref := tapAndRead(dutInstance.instructionFetch.request.bits.address)
+  dutInstance.instructionFetch.response.bits.data := dpiInstructionFetch.data.ref
+  dutInstance.instructionFetch.response.valid := dpiInstructionFetch.responseValid.ref
 
-  forceInitial(dpiLoadStore.clock.ref, clock)
-  forceInitial(dpiLoadStore.requestValid.ref, read(ProbeValue(dutInstance.loadStore.request.valid)))
-  forceInitial(dpiLoadStore.address.ref, read(ProbeValue(dutInstance.loadStore.request.bits.address)))
-  forceInitial(dpiLoadStore.writeEnable.ref, read(ProbeValue(dutInstance.loadStore.request.bits.writeEnable)))
-  forceInitial(dpiLoadStore.maskByte.ref, read(ProbeValue(dutInstance.loadStore.request.bits.maskByte)))
-  forceInitial(dpiLoadStore.storeData.ref, read(ProbeValue(dutInstance.loadStore.request.bits.data)))
-  dutInstance.loadStore.response.valid := read(dpiLoadStore.responseValid.ref)
-  dutInstance.loadStore.response.bits.data := read(dpiLoadStore.loadData.ref)
+  dpiLoadStore.clock.ref := clock
+  dpiLoadStore.requestValid.ref := tapAndRead(dutInstance.loadStore.request.valid)
+  dpiLoadStore.address.ref := tapAndRead(dutInstance.loadStore.request.bits.address)
+  dpiLoadStore.writeEnable.ref := tapAndRead(dutInstance.loadStore.request.bits.writeEnable)
+  dpiLoadStore.maskByte.ref := tapAndRead(dutInstance.loadStore.request.bits.maskByte)
+  dpiLoadStore.storeData.ref := tapAndRead(dutInstance.loadStore.request.bits.data)
+  dutInstance.loadStore.response.valid := dpiLoadStore.responseValid.ref
+  dutInstance.loadStore.response.bits.data := dpiLoadStore.loadData.ref
 
-  forceInitial(dpiRegFileWrite.clock.ref, clock)
-  forceInitial(dpiRegFileWrite.writeValid.ref, read(dutInstance.rfWriteValid))
-  forceInitial(dpiRegFileWrite.isFp.ref, read(dutInstance.rfWriteFp))
-  forceInitial(dpiRegFileWrite.isVector.ref, read(dutInstance.rfWriteVector))
-  forceInitial(dpiRegFileWrite.data.ref, read(dutInstance.rfWriteData))
-  forceInitial(dpiRegFileWrite.address.ref, read(dutInstance.rfWriteAddress))
+  dpiRegFileWrite.clock.ref := clock
+  dpiRegFileWrite.writeValid.ref := read(dutInstance.rfWriteValid)
+  dpiRegFileWrite.writeValid.ref := read(dutInstance.rfWriteValid)
+  dpiRegFileWrite.isFp.ref := read(dutInstance.rfWriteFp)
+  dpiRegFileWrite.isVector.ref := read(dutInstance.rfWriteVector)
+  dpiRegFileWrite.data.ref := read(dutInstance.rfWriteData)
+  dpiRegFileWrite.address.ref := read(dutInstance.rfWriteAddress)
 }

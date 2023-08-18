@@ -14,28 +14,33 @@ case class DPIReference[T <: Element](name: String, ref: T)
 
 abstract class DPIModule
   extends ExtModule
-    with HasExtModuleInline
-    with HasExtModuleDefine {
+    with HasExtModuleInline {
 
   // C Style
   final override def desiredName: String = "[A-Z\\d]".r.replaceAllIn(super.desiredName, { m =>
     (if(m.end(0) == 1) "" else "_") + m.group(0).toLowerCase()
   })
 
-  def dpiIn[T <: Element](name: String, data: T) = bind(name, false, true, data)
+  def dpiIn[T <: Element](name: String, data: T) = bind(name, false, Input(data))
 
-  def dpiOut[T <: Element](name: String, data: T) = bind(name, true, true, data)
+  def dpiOut[T <: Element](name: String, data: T) = bind(name, true, Output(data))
 
-  def dpiTrigger[T <: Element](name: String, data: T) = bind(name, false, false, data)
+  def dpiTrigger[T <: Element](name: String, data: T) = bind(name, false, Input(data))
 
   val isImport: Boolean
   val references: ArrayBuffer[DPIElement[_]] = scala.collection.mutable.ArrayBuffer.empty[DPIElement[_]]
   val dpiReferences: ArrayBuffer[DPIElement[_]] = scala.collection.mutable.ArrayBuffer.empty[DPIElement[_]]
 
-  def bind[T <: Element](name: String, output: Boolean, isDPIArg: Boolean, data: T) = {
-    val ref = define(data, Seq(desiredName, desiredName, name))
-    val ele = DPIElement(name, output, ref)
-    require(chisel3.reflect.DataMirror.hasProbeTypeModifier(data), s"$name should be a probe type")
+  def bind[T <: Element](name: String, isDPIArg: Boolean, data: T) = {
+    val ref = IO(data).suggestName(name)
+
+    val ele = DPIElement(name, chisel3.reflect.DataMirror.directionOf(ref) match {
+      case ActualDirection.Empty => false
+      case ActualDirection.Unspecified => false
+      case ActualDirection.Output => true
+      case ActualDirection.Input => false
+      case ActualDirection.Bidirectional(dir) => false
+    }, ref)
     require(!references.exists(ele => ele.name == name), s"$name already added.")
     references += ele
     if (isDPIArg) {
@@ -49,15 +54,22 @@ abstract class DPIModule
   // Magic to execute post-hook
   private[chisel3] override def generateComponent() = {
     // return binding function and probe signals
-    val localDefinition = references.map {
+    val localDefinition = "(" + references.map {
       case DPIElement(name, _, element) =>
+        val output = chisel3.reflect.DataMirror.directionOf(element) match {
+          case ActualDirection.Empty => false
+          case ActualDirection.Unspecified => false
+          case ActualDirection.Output => true
+          case ActualDirection.Input => false
+          case ActualDirection.Bidirectional(dir) => false
+        }
         val width = chisel3.reflect.DataMirror.widthOf(element) match {
           case UnknownWidth() => throw new Exception(s"$desiredName.$name width unknown")
           case KnownWidth(value) => value
         }
-        val localDefinitionTpe = if (width != 1) s"[${width - 1}:0] " else ""
-        s"logic $localDefinitionTpe$name"
-    }.mkString("; ")
+        val tpe = if (width != 1) s"bit[${width - 1}:0] " else ""
+        s"${if (output) "output" else "input" } $tpe$name"
+    }.mkString(", ") + ")"
 
     val dpiArg = dpiReferences.map {
       case DPIElement(name, output, element) =>
@@ -66,14 +78,13 @@ abstract class DPIModule
           case UnknownWidth() => throw new Exception(s"$desiredName.$name width unknown")
           case KnownWidth(value) => value
         }
-        val functionParameterTpe = if (width != 1) s"bit[${width - 1}:0] " else ""
-        s"$direction$functionParameterTpe$name"
+        val tpe = if (width != 1) s"bit[${width - 1}:0] " else ""
+        s"$direction$tpe$name"
     }.mkString(", ")
 
     setInline(
       s"$desiredName.sv",
-      s"""module $desiredName;
-         |${if (localDefinition.isEmpty) "" else localDefinition + ";"}
+      s"""module $desiredName$localDefinition;
          |${if (isImport) s"""import "DPI-C" function void $desiredName($dpiArg);""" else s"""export "DPI-C" function $desiredName;"""}
          |${if (isImport) s"""$trigger $desiredName(${dpiReferences.map(_.name).mkString(", ")});""" else ""}
          |${if (!isImport) exportBody else ""}
