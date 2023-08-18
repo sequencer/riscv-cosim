@@ -33,6 +33,8 @@ DPI void instruction_fetch(IN svBitVecVal /* <32> */ *addr,
   TRY({
     bridge.check_if_and_record_commitlog((uint32_t)*addr, (uint32_t)*data);
   });
+
+  *resp_valid = true;
 }
 
 DPI void load_store(IN svBitVecVal /* 32 */ *addr,
@@ -50,6 +52,8 @@ DPI void load_store(IN svBitVecVal /* 32 */ *addr,
         "[dpi]\t @{} mem write is not yet implemented.", bridge.cycle());
   else
     TRY({ bridge.mem_read((uint32_t)*addr, load_data); });
+
+  *resp_valid = true;
 }
 
 DPI void reg_file_write(IN svBit is_fp, IN svBit is_vector,
