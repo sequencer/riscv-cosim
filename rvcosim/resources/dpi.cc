@@ -15,9 +15,10 @@ DPI void instruction_fetch(IN svBitVecVal /* <32> */ *addr,
                            IN svBitVecVal /* <32> */ *data,
                            OUT svBit *resp_valid) {
 
-  CHECK_S(false) << fmt::format(
-      "[dpi]\t @{} instruction_fetch() is not yet implemented.",
-      bridge.cycle());
+  LOG(INFO) << fmt::format("[dpi]\t @{} rtl did an instruction fetch at "
+                           "address 0x{:04X}, got 0x{:04X}.",
+                           bridge.cycle(), (uint32_t)*addr, (uint32_t)*data);
+  LOG(INFO) << fmt::format("[dpi]\t TODO: check it.");
 }
 
 DPI void load_store(IN svBitVecVal /* 32 */ *addr,

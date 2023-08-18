@@ -59,7 +59,7 @@ Spike::Spike()
 
   /* setup reset vector: `J <entrypoint>` */
 
-  /* Format of the J-type instruction:
+  /* format of the J-type instruction:
    * |   31    |30       21|   20    |19        12|11   7|6      0|
    * | imm[20] | imm[10:1] | imm[11] | imm[19:12] |  rd  | opcode |
    *  ^------------------------------------------^
@@ -72,6 +72,8 @@ Spike::Spike()
 }
 
 void Spike::mem_read(uint32_t addr, uint32_t *out) {
-  /* FIXME: assert on addr. */
   *out = *(uint32_t *)sim.addr_to_mem(addr);
+  LOG(INFO) << fmt::format("[spike]\t spike read memory at 0x{:04X}, responsed "
+                           "with data 0x{:04X}.",
+                           addr, *out);
 }
