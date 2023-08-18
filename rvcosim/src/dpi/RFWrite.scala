@@ -3,7 +3,7 @@ package rvcosim.dpi
 import chisel3._
 import chisel3.probe._
 
-class RFWrite extends DPIModule {
+class RegFileWrite extends DPIModule {
   val isImport: Boolean = true
   val clock = dpiTrigger("clock", RWProbe(Bool()))
   val writeValid = dpiTrigger("writeValid", RWProbe(Bool()))

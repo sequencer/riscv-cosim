@@ -17,7 +17,7 @@ class Cosim(dut: => Core) extends RawModule {
   val dpiTimeoutCheck = Module(new TimeoutCheck(TimeoutCheckParameter(parameter.clockRate)))
   val dpiInstructionFetch = Module(new InstructionFetch(InstructionFetchParameter(dutInstance.parameter.ifAddressWidth, dutInstance.parameter.ifDataWidth)))
   val dpiLoadStore = Module(new LoadStore(LoadStoreParameter(dutInstance.parameter.ifAddressWidth, dutInstance.parameter.ifDataWidth)))
-  val dpiRFWrite = Module(new RFWrite)
+  val dpiRegFileWrite = Module(new RegFileWrite)
 
   val clock = read(clockGen.clock)
   val reset = read(clockGen.reset)
@@ -39,10 +39,10 @@ class Cosim(dut: => Core) extends RawModule {
   dutInstance.loadStore.response.valid := read(dpiLoadStore.responseValid.ref)
   dutInstance.loadStore.response.bits.data := read(dpiLoadStore.loadData.ref)
 
-  forceInitial(dpiRFWrite.clock.ref, clock)
-  forceInitial(dpiRFWrite.writeValid.ref, read(dutInstance.rfWriteValid))
-  forceInitial(dpiRFWrite.isFp.ref, read(dutInstance.rfWriteFp))
-  forceInitial(dpiRFWrite.isVector.ref, read(dutInstance.rfWriteVector))
-  forceInitial(dpiRFWrite.data.ref, read(dutInstance.rfWriteData))
-  forceInitial(dpiRFWrite.address.ref, read(dutInstance.rfWriteAddress))
+  forceInitial(dpiRegFileWrite.clock.ref, clock)
+  forceInitial(dpiRegFileWrite.writeValid.ref, read(dutInstance.rfWriteValid))
+  forceInitial(dpiRegFileWrite.isFp.ref, read(dutInstance.rfWriteFp))
+  forceInitial(dpiRegFileWrite.isVector.ref, read(dutInstance.rfWriteVector))
+  forceInitial(dpiRegFileWrite.data.ref, read(dutInstance.rfWriteData))
+  forceInitial(dpiRegFileWrite.address.ref, read(dutInstance.rfWriteAddress))
 }

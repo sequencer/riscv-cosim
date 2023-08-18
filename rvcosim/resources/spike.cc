@@ -27,7 +27,7 @@ Spike::Spike()
                 std::cerr    /* sout */
       ) {
   /* Initialize processor state, read elf into sim, setup entrypoint. */
-  LOG(INFO) << fmt::format("[spike][isa] read isa string: {}",
+  LOG(INFO) << fmt::format("[spike] spike read isa string: {}",
                            env("COSIM_isa"));
   auto &csrmap = processor.get_state()->csrmap;
   csrmap[CSR_MSIMEND] =
@@ -37,7 +37,7 @@ Spike::Spike()
   processor.reset();
   uint64_t entry;
   auto elfpath = std::string(env("COSIM_elf"));
-  LOG(INFO) << fmt::format("[spike][elf] loading file: {}", elfpath);
+  LOG(INFO) << fmt::format("[spike] spike is loading elf file: {}", elfpath);
 
   if (std::string_view(env("COSIM_isa"), 4) == "rv32") {
     entry = load_elf<true>(elfpath, sim.mem, sim.memsize).entry;
@@ -46,5 +46,6 @@ Spike::Spike()
   }
   processor.get_state()->pc = entry;
 
-  LOG(INFO) << fmt::format("[spike][elf] loaded, entrypoint: 0x{:08X}", entry);
+  LOG(INFO) << fmt::format(
+      "[spike] spike loaded elf file, entrypoint is 0x{:08X}", entry);
 }
