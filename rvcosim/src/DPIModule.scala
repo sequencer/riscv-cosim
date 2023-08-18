@@ -16,6 +16,12 @@ abstract class DPIModule
   extends ExtModule
     with HasExtModuleInline
     with HasExtModuleDefine {
+
+  // C Style
+  final override def desiredName: String = "[A-Z\\d]".r.replaceAllIn(super.desiredName, { m =>
+    "_" + m.group(0).toLowerCase()
+  })
+
   def dpiIn[T <: Element](name: String, data: T) = bind(name, false, true, data)
 
   def dpiOut[T <: Element](name: String, data: T) = bind(name, true, true, data)
