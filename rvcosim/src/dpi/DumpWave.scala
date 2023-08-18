@@ -8,8 +8,8 @@ class DumpWave extends DPIModule {
   // TODO: think about `chisel3.properties.Property`?
   override val exportBody = s"""
      |function $desiredName(input string file);
-     |   $$dumpfile(file);
-     |   $$dumpvars(0);
+     |  $$dumpfile(file);
+     |  $$dumpvars(0);
      |endfunction;
      |""".stripMargin
 }

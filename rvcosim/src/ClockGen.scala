@@ -1,6 +1,6 @@
 package rvcosim
 
-import chisel3.{Bool, Clock, Output}
+import chisel3._
 import chisel3.experimental.ExtModule
 import chisel3.probe._
 import chisel3.util.HasExtModuleInline
@@ -20,6 +20,6 @@ class ClockGen(val parameter: ClockGenParameter)
        |endmodule
        |""".stripMargin
   )
-  val clock = define(RWProbe(Bool()), Seq("ClockGen", "ClockGen", "clock"))
-  val reset = define(RWProbe(Bool()), Seq("ClockGen", "ClockGen", "reset"))
+  val clock = define(RWProbe(Clock()), Seq("ClockGen", "ClockGen", "clock"))
+  val reset = define(RWProbe(Reset()), Seq("ClockGen", "ClockGen", "reset"))
 }

@@ -9,6 +9,7 @@ trait CoreParameter {
   val ifDataWidth: Int
   val lsuAddressWidth: Int
   val lsuDataWidth: Int
+  val xlen: Int
 }
 
 class IFBundle(val parameter: CoreParameter) extends Bundle {
@@ -20,8 +21,8 @@ class IFBundle(val parameter: CoreParameter) extends Bundle {
     val data: UInt = UInt(parameter.ifDataWidth.W)
   }
 
-  val request: Valid[Request] = Valid(new Request)
-  val response: Valid[Response] = Flipped(Valid(new Response))
+  val request: Valid[Request] = Probe(Valid(new Request))
+  val response: Valid[Response] = RWProbe(Valid(new Response))
 }
 
 class LSUBundle(val parameter: CoreParameter) extends Bundle {
@@ -36,20 +37,20 @@ class LSUBundle(val parameter: CoreParameter) extends Bundle {
     val data = UInt(parameter.lsuDataWidth.W)
   }
 
-  val request: Valid[Request] = Valid(new Request)
-  val response: Valid[Response] = Flipped(Valid(new Response))
+  val request: Valid[Request] = RWProbe(Valid(new Request))
+  val response: Valid[Response] = RWProbe((Valid(new Response)))
+}
+
+class RFBundle(val parameter: CoreParameter) extends Bundle {
+  val data = UInt(parameter.xlen.W)
+  val address = UInt(chisel3.util.log2Ceil(32).W)
 }
 
 abstract class Core extends RawModule {
   def parameter: CoreParameter
-  val clock: Clock = IO(Input(Clock()))
-  val reset: Reset = IO(Input(Reset()))
-  val instructionFetch = IO(new IFBundle(parameter))
-  val loadStore = IO(new LSUBundle(parameter))
-
-  val rfWriteValid = IO(RWProbe(Bool()))
-  val rfWriteFp = IO(RWProbe(Bool()))
-  val rfWriteVector = IO(RWProbe(Bool()))
-  val rfWriteData = IO(RWProbe(UInt(32.W)))
-  val rfWriteAddress = IO(RWProbe(UInt(chisel3.util.log2Ceil(32).W)))
+  val clockRef: Clock = IO(RWProbe(Clock()))
+  val resetRef: Reset = IO(RWProbe(Reset()))
+  val instructionFetchRef = IO(new IFBundle(parameter))
+  val loadStoreRef = IO(new LSUBundle(parameter))
+  val rfRef = IO(RWProbe(Valid(new RFBundle(parameter))))
 }

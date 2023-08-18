@@ -8,7 +8,7 @@ class Error extends DPIModule {
   // TODO: think about `chisel3.properties.Property`?
   override val exportBody = s"""
      |function $desiredName(input string what);
-     |   $$error(what);
+     |  $$error(what);
      |endfunction;
      |""".stripMargin
 }

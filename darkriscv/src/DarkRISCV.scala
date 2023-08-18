@@ -12,31 +12,31 @@ class DarkRISCVParameter extends CoreParameter {
   override val ifDataWidth: Int = 32
   override val lsuAddressWidth: Int = 32
   override val lsuDataWidth: Int = 32
+  override val xlen: Int = 32
 }
 
 class DarkRISCVWrapper extends Core {
   def parameter: CoreParameter = new DarkRISCVParameter
 
   val darkriscv = Module(new DarkRISCV)
-  darkriscv.clock := clock
-  darkriscv.reset := reset
-  darkriscv.halt := false.B
-  darkriscv.idata := instructionFetch.response.bits.data
-  instructionFetch.request.bits.address := darkriscv.iaddr
-  instructionFetch.request.valid := true.B
-  darkriscv.datai := loadStore.response.bits.data
-  loadStore.request.bits.data := darkriscv.datao
-  loadStore.request.bits.address := darkriscv.daddr
-  loadStore.request.bits.maskByte := darkriscv.be
-  loadStore.request.bits.writeEnable := darkriscv.wr
-  loadStore.request.valid := darkriscv.wr || darkriscv.rd
-  // dontcare darkriscv.idle
-  // dontcare debug
-  define(rfWriteValid, darkriscv.rfWriteValid)
-  define(rfWriteData, darkriscv.rfWriteData)
-  define(rfWriteAddress, darkriscv.rfWriteAddress)
-  define(rfWriteFp, RWProbeValue(WireDefault(false.B)))
-  define(rfWriteVector, RWProbeValue(WireDefault(false.B)))
+  darkriscv.clock := read(clockRef)
+  darkriscv.reset := read(resetRef)
+  // darkriscv.halt := false.B
+  // darkriscv.idata := read(instructionFetchRef.response.bits.data)
+  // define(instructionFetchRef.request.bits.address, ProbeValue(darkriscv.iaddr))
+  // // TODO: ref it
+  // define(instructionFetchRef.request.valid, ProbeValue(WireDefault(true.B)))
+  // darkriscv.datai := read(loadStoreRef.response.bits.data)
+  // define(loadStoreRef.request.bits.data, RWProbeValue(darkriscv.datao))
+  // define(loadStoreRef.request.bits.address, RWProbeValue(darkriscv.daddr))
+  // define(loadStoreRef.request.bits.maskByte, RWProbeValue(darkriscv.be))
+  // define(loadStoreRef.request.bits.writeEnable, RWProbeValue(darkriscv.wr))
+  // define(loadStoreRef.request.valid, RWProbeValue(WireDefault(darkriscv.wr || darkriscv.rd)))
+  // // dontcare darkriscv.idle
+  // // dontcare debug
+  // define(rfRef.bits.data, RWProbeValue(darkriscv.rfWriteData))
+  // define(rfRef.bits.address, RWProbeValue(darkriscv.rfWriteAddress))
+  // define(rfRef.valid, RWProbeValue(darkriscv.rfWriteValid))
 }
 
 class DarkRISCV extends ExtModule

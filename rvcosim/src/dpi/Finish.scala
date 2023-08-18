@@ -8,7 +8,7 @@ class Finish extends DPIModule {
   // TODO: think about `chisel3.properties.Property`?
   override val exportBody = s"""
      |function $desiredName();
-     |   $$finish;
+     |  $$finish;
      |endfunction;
      |""".stripMargin
 }

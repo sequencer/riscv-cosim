@@ -5,7 +5,7 @@ import chisel3.probe._
 
 class RegFileWrite extends DPIModule {
   val isImport: Boolean = true
-  val clock = dpiTrigger("clock", RWProbe(Bool()))
+  val clock = dpiTrigger("clock", RWProbe(Clock()))
   val writeValid = dpiTrigger("writeValid", RWProbe(Bool()))
   val isFp = dpiIn("isFp", RWProbe(Bool()))
   val isVector = dpiIn("isVector", RWProbe(Bool()))
