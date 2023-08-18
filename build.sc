@@ -1,13 +1,24 @@
 import mill._
 import mill.scalalib._
 import mill.scalalib.scalafmt._
+import $file.chisel.build
 import $file.common
 
 object v {
-  val scala = "2.13.10"
-  val chisel = ivy"org.chipsalliance::chisel:6.0.0-M2"
-  val chiselPlugin = ivy"org.chipsalliance:::chisel-plugin:6.0.0-M2"
+  val scala = "2.13.11"
 }
+
+object chisel extends Chisel
+
+trait Chisel
+  extends millbuild.chisel.build.Chisel {
+  def crossValue = v.scala
+
+  override def millSourcePath = os.pwd / "chisel"
+
+  def scalaVersion = T(v.scala)
+}
+
 
 object rvcosim extends RVCosim
 
@@ -18,13 +29,13 @@ trait RVCosim
 
   override def millSourcePath = os.pwd / "rvcosim"
 
-  def chiselModule = None
+  def chiselModule = Some(chisel)
 
-  def chiselPluginJar = None
+  def chiselPluginJar = T(Some(chisel.pluginModule.jar()))
 
-  def chiselIvy = Some(v.chisel)
+  def chiselIvy = None
 
-  def chiselPluginIvy = Some(v.chiselPlugin)
+  def chiselPluginIvy = None
 }
 
 object darkriscv extends Darkriscv

@@ -1,0 +1,3 @@
+[submodule "chisel"]
+	path = chisel
+	url = git@github.com:chipsalliance/chisel.git
