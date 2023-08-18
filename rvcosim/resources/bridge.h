@@ -7,17 +7,6 @@
 #include "glog.h"
 #include "spike.h"
 
-#define TRY(statement)                                                         \
-  try {                                                                        \
-    if (!terminated)                                                           \
-      statement;                                                               \
-  } catch (std::runtime_error & e) {                                           \
-    terminate();                                                               \
-    LOG(ERROR) << fmt::format(                                                 \
-        "emulator detect an exception ({}), gracefully aborting...",           \
-        e.what());                                                             \
-  }
-
 enum RegClass { GPR = 0, FPR = 1, VRF = 2 };
 
 inline RegClass to_reg_class(bool fp, bool vector) {
@@ -42,7 +31,6 @@ class Bridge {
 public:
   Bridge() {}
   ~Bridge() { delete spike; }
-  void terminate() { terminated = true; }
 
   void init() {
     LOG(INFO) << fmt::format("[bridge]\t bridge initializing");
@@ -57,7 +45,6 @@ public:
   void check_if_and_record_commitlog(uint32_t addr, uint32_t raw_insn);
 
 private:
-  bool terminated = false;
   VerilatedContext *ctx = nullptr;
   Spike *spike = nullptr;
 };

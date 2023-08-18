@@ -1,5 +1,5 @@
 run: build smoke
-	GLOG_logtostderr=1 COSIM_isa=rv32gc COSIM_elf=run/smoke.elf ./run/emulator/build/emulator
+	GLOG_logtostderr=1 COSIM_isa=rv32gc COSIM_elf=run/smoke.elf COSIM_wave=run/wave.fst ./run/emulator/build/emulator
 
 build:
 	nix develop -c mill -i darkriscv

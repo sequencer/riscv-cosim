@@ -19,6 +19,8 @@ class Cosim(dut: => Core) extends RawModule {
   val dpiLoadStore = Module(new LoadStore(LoadStoreParameter(dutInstance.parameter.ifAddressWidth, dutInstance.parameter.ifDataWidth)))
   val dpiRegFileWrite = Module(new RegFileWrite)
   val dpiDumpWave = Module(new DumpWave)
+  val dpiFinish = Module(new Finish)
+  val dpiError = Module(new Error)
 
   val clock = read(clockGen.clock)
   val reset = read(clockGen.reset)

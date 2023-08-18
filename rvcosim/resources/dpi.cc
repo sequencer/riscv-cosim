@@ -1,15 +1,27 @@
+#include <VCosim__Dpi.h>
 #include <csignal>
 #include <svdpi.h>
 
 #include "bridge.h"
 #include "glog.h"
+#include "utils.h"
 
 #define DPI extern "C"
 #define IN const
 #define OUT
 
+#define TRY(statement)                                                         \
+  try {                                                                        \
+    statement;                                                                 \
+  } catch (std::runtime_error & e) {                                           \
+    LOG(INFO) << fmt::format(                                                  \
+        "emulator detect an exception ({}), gracefully aborting...",           \
+        e.what());                                                             \
+    svSetScope(svGetScopeFromName("TOP.Cosim.dpiError"));                      \
+    error(e.what());                                                           \
+  }
+
 static Bridge bridge = Bridge();
-static void sigint_handler(int s) { bridge.terminate(); }
 
 DPI void instruction_fetch(IN svBitVecVal /* <32> */ *addr,
                            IN svBitVecVal /* <32> */ *data,
@@ -18,8 +30,9 @@ DPI void instruction_fetch(IN svBitVecVal /* <32> */ *addr,
   LOG(INFO) << fmt::format("[dpi]\t @{} rtl did an instruction fetch at "
                            "address 0x{:08X}, got 0x{:08X}.",
                            bridge.cycle(), (uint32_t)*addr, (uint32_t)*data);
-
-  bridge.check_if_and_record_commitlog((uint32_t)*addr, (uint32_t)*data);
+  TRY({
+    bridge.check_if_and_record_commitlog((uint32_t)*addr, (uint32_t)*data);
+  });
 }
 
 DPI void load_store(IN svBitVecVal /* 32 */ *addr,
@@ -36,7 +49,7 @@ DPI void load_store(IN svBitVecVal /* 32 */ *addr,
     CHECK_S(false) << fmt::format(
         "[dpi]\t @{} mem write is not yet implemented.", bridge.cycle());
   else
-    bridge.mem_read((uint32_t)*addr, load_data);
+    TRY({ bridge.mem_read((uint32_t)*addr, load_data); });
 }
 
 DPI void reg_file_write(IN svBit is_fp, IN svBit is_vector,
@@ -50,14 +63,17 @@ DPI void reg_file_write(IN svBit is_fp, IN svBit is_vector,
   LOG(INFO) << fmt::format(
       "[dpi]\t @{} rtl wants to write {}#{} with data: 0x{:08X}",
       bridge.cycle(), reg_class_name(rc), n, d);
-  bridge.reg_write(rc, n, d);
+  TRY({ bridge.reg_write(rc, n, d); });
 }
 
 DPI void init_cosim() {
   LOG(INFO) << fmt::format("[dpi]\t initialize dpi<->spike bridge");
-  std::signal(SIGINT, sigint_handler);
   google::InitGoogleLogging("emulator");
   bridge.init();
+
+  /* register dpi wave dump, wave file will be dumped at exit. */
+  svSetScope(svGetScopeFromName("TOP.Cosim.dpiDumpWave"));
+  dump_wave(env("COSIM_wave"));
 
   LOG(INFO) << fmt::format("[dpi]\t @{} dpi<->spike bridge initialized",
                            bridge.cycle());
@@ -65,8 +81,10 @@ DPI void init_cosim() {
 
 DPI void timeout_check() {
   /* FIXME: proper implementation. */
-  if (bridge.cycle() > 1000) {
-    LOG(INFO) << fmt::format("[dpi]\t @{} timeout, exiting...", bridge.cycle());
-    exit(1);
-  }
+  TRY({
+    if (bridge.cycle() > 1000) {
+      LOG(FATAL_S) << fmt::format("[dpi]\t @{} timeout, exiting...",
+                                  bridge.cycle());
+    }
+  })
 }
