@@ -10,6 +10,8 @@ class Spike {
 public:
   Spike();
 
+  void mem_read(uint32_t addr, uint32_t *out);
+
 private:
   /* We want to have maximum flexibility, so we use raw processor_t and do
    * everything else ourselves. */

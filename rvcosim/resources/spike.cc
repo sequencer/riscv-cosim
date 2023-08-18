@@ -2,6 +2,9 @@
 #include "elfloader.h"
 #include "utils.h"
 
+/* FIXME: make this configurable at runtime (?) */
+const uint32_t reset_vector_addr = 0;
+
 Spike::Spike()
     : sim(1 << (10 + 10 + 6)), /* 64M memory should be enough for now. */
       isa_parser(env("COSIM_isa"), "M"),
@@ -26,8 +29,8 @@ Spike::Spike()
                 nullptr,     /* log_file_t */
                 std::cerr    /* sout */
       ) {
-  /* Initialize processor state, read elf into sim, setup entrypoint. */
-  LOG(INFO) << fmt::format("[spike] spike read isa string: {}",
+  /* initialize processor state. */
+  LOG(INFO) << fmt::format("[spike]\t spike read isa string: {}",
                            env("COSIM_isa"));
   auto &csrmap = processor.get_state()->csrmap;
   csrmap[CSR_MSIMEND] =
@@ -35,17 +38,40 @@ Spike::Spike()
   processor.enable_log_commits();
 
   processor.reset();
+
+  /* read elf into sim */
   uint64_t entry;
   auto elfpath = std::string(env("COSIM_elf"));
-  LOG(INFO) << fmt::format("[spike] spike is loading elf file: {}", elfpath);
 
   if (std::string_view(env("COSIM_isa"), 4) == "rv32") {
     entry = load_elf<true>(elfpath, sim.mem, sim.memsize).entry;
   } else {
     entry = load_elf<false>(elfpath, sim.mem, sim.memsize).entry;
-  }
-  processor.get_state()->pc = entry;
 
+    CHECK_S(false) << fmt::format("rv64 support is not yet implemented.");
+  }
+
+  /* setup entrypoint */
+  processor.get_state()->pc = reset_vector_addr;
   LOG(INFO) << fmt::format(
-      "[spike] spike loaded elf file, entrypoint is 0x{:08X}", entry);
+      "[spike]\t spike loaded elf file {}, entrypoint is 0x{:08X}.", elfpath,
+      entry);
+
+  /* setup reset vector: `J <entrypoint>` */
+
+  /* Format of the J-type instruction:
+   * |   31    |30       21|   20    |19        12|11   7|6      0|
+   * | imm[20] | imm[10:1] | imm[11] | imm[19:12] |  rd  | opcode |
+   *  ^------------------------------------------^
+   */
+  *(uint32_t *)sim.addr_to_mem(reset_vector_addr) =
+      0x6f | (((entry >> 20) & 1) << 31) | (((entry >> 1) & 0x3ff) << 21) |
+      (((entry >> 11) & 1) << 20) | (((entry >> 12) & 0xff) << 12);
+  LOG(INFO) << fmt::format("[spike]\t spike added reset vector at mem@{}.",
+                           reset_vector_addr);
+}
+
+void Spike::mem_read(uint32_t addr, uint32_t *out) {
+  /* FIXME: assert on addr. */
+  *out = *(uint32_t *)sim.addr_to_mem(addr);
 }
