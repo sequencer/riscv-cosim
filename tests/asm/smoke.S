@@ -1,5 +1,5 @@
-.global test
-test:
+.global start
+start:
     addi x1, x1, 1
 
 exit:
