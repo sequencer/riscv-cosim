@@ -67,8 +67,8 @@ DPI void reg_file_write(IN svBit is_fp, IN svBit is_vector,
 }
 
 DPI void init_cosim() {
-  LOG(INFO) << fmt::format("[dpi]\t initialize dpi<->spike bridge");
   google::InitGoogleLogging("emulator");
+  LOG(INFO) << fmt::format("[dpi]\t initialize dpi<->spike bridge");
   bridge.init();
 
   /* register dpi wave dump, wave file will be dumped at exit. */
