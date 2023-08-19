@@ -10,11 +10,8 @@ class Spike {
 public:
   Spike();
 
-  /* functional procedures. */
   void mem_read(uint32_t addr, uint32_t *out);
-
-  /* cosim procedures. */
-  void check_if_and_record_commitlog(uint32_t addr, uint32_t raw_insn);
+  void instruction_fetch(uint32_t addr, uint32_t *data);
 
 private:
   /* We want to have maximum flexibility, so we use raw processor_t and do

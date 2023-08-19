@@ -80,19 +80,18 @@ void Spike::mem_read(uint32_t addr, uint32_t *out) {
                            addr, *out);
 }
 
-void Spike::check_if_and_record_commitlog(uint32_t addr, uint32_t raw_insn) {
+void Spike::instruction_fetch(uint32_t addr, uint32_t *data) {
   auto spike_state = processor.get_state();
   reg_t spike_pc = spike_state->pc;
   auto spike_fetch = processor.get_mmu()->load_insn(spike_pc);
   uint32_t spike_raw_insn = spike_fetch.insn.bits();
 
-  CHECK_S(spike_raw_insn == raw_insn) << fmt::format(
-      "spike fetched 0x{:08X} while rtl fetched 0x{:08X}:\n"
-      "> {:08X}\t{}\n"
-      "< {:08X}\t{}\n",
-      spike_raw_insn, raw_insn, spike_raw_insn,
-      processor.get_disassembler()->disassemble(spike_fetch.insn), raw_insn,
-      processor.get_disassembler()->disassemble(insn_t(raw_insn)));
+  LOG(INFO) << fmt::format(
+      "[spike]\t spike fetched 0x{:08X} ({}) and responsed to rtl.\n",
+      spike_raw_insn,
+      processor.get_disassembler()->disassemble(spike_fetch.insn));
+
+  *data = spike_raw_insn;
 
   /* TODO: record commit log. */
 

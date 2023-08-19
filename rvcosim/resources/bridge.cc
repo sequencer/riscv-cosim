@@ -16,6 +16,6 @@ void Bridge::mem_read(uint32_t addr, uint32_t *out) {
   spike->mem_read(addr, out);
 }
 
-void Bridge::check_if_and_record_commitlog(uint32_t addr, uint32_t raw_insn) {
-  spike->check_if_and_record_commitlog(addr, raw_insn);
+void Bridge::instruction_fetch(uint32_t addr, uint32_t *data) {
+  spike->instruction_fetch(addr, data);
 }

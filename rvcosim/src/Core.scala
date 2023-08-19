@@ -21,7 +21,7 @@ class IFBundle(val parameter: CoreParameter) extends Bundle {
   }
 
   val request: Valid[Request] = Valid(new Request)
-  val response: Valid[Response] = Flipped(Valid(new Response))
+  val response: Response = Flipped(new Response)
 }
 
 class LSUBundle(val parameter: CoreParameter) extends Bundle {

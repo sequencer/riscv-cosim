@@ -21,7 +21,7 @@ class DarkRISCVWrapper extends Core {
   darkriscv.clock := clock
   darkriscv.reset := reset
   darkriscv.halt := false.B
-  darkriscv.idata := instructionFetch.response.bits.data
+  darkriscv.idata := instructionFetch.response.data
   instructionFetch.request.bits.address := darkriscv.iaddr
   instructionFetch.request.valid := true.B
   darkriscv.datai := loadStore.response.bits.data

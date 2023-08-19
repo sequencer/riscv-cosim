@@ -24,17 +24,12 @@
 static Bridge bridge = Bridge();
 
 DPI void instruction_fetch(IN svBitVecVal /* <32> */ *addr,
-                           IN svBitVecVal /* <32> */ *data,
-                           OUT svBit *resp_valid) {
+                           OUT svBitVecVal /* <32> */ *data) {
 
-  LOG(INFO) << fmt::format("[dpi]\t @{} rtl did an instruction fetch at "
-                           "address 0x{:08X}, got 0x{:08X}.",
-                           bridge.cycle(), (uint32_t)*addr, (uint32_t)*data);
-  TRY({
-    bridge.check_if_and_record_commitlog((uint32_t)*addr, (uint32_t)*data);
-  });
-
-  *resp_valid = true;
+  LOG(INFO) << fmt::format(
+      "[dpi]\t @{} rtl wants to fetch an instruction from address 0x{:08X}.",
+      bridge.cycle(), (uint32_t)*addr);
+  TRY({ bridge.instruction_fetch((uint32_t)*addr, (uint32_t *)data); });
 }
 
 DPI void load_store(IN svBitVecVal /* 32 */ *addr,
@@ -86,7 +81,7 @@ DPI void init_cosim() {
 DPI void timeout_check() {
   /* FIXME: proper implementation. */
   TRY({
-    if (bridge.cycle() > 1000) {
+    if (bridge.cycle() > 50) {
       LOG(FATAL_S) << fmt::format("[dpi]\t @{} timeout, exiting...",
                                   bridge.cycle());
     }

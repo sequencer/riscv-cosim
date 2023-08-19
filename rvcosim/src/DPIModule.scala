@@ -21,7 +21,7 @@ abstract class DPIModule
     (if(m.end(0) == 1) "" else "_") + m.group(0).toLowerCase()
   })
 
-  def dpiIn[T <: Element](name: String, data: T) = bind(name, false, Input(data))
+  def dpiIn[T <: Element](name: String, data: T) = bind(name, true, Input(data))
 
   def dpiOut[T <: Element](name: String, data: T) = bind(name, true, Output(data))
 

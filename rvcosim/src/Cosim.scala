@@ -31,8 +31,7 @@ class Cosim(dut: => Core) extends RawModule {
   dpiInstructionFetch.clock.ref := clock
   dpiInstructionFetch.requestValid.ref := tapAndRead(dutInstance.instructionFetch.request.valid)
   dpiInstructionFetch.address.ref := tapAndRead(dutInstance.instructionFetch.request.bits.address)
-  dutInstance.instructionFetch.response.bits.data := dpiInstructionFetch.data.ref
-  dutInstance.instructionFetch.response.valid := dpiInstructionFetch.responseValid.ref
+  dutInstance.instructionFetch.response.data := dpiInstructionFetch.data.ref
 
   dpiLoadStore.clock.ref := clock
   dpiLoadStore.requestValid.ref := tapAndRead(dutInstance.loadStore.request.valid)
