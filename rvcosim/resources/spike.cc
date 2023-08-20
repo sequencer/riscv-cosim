@@ -1,3 +1,4 @@
+#include <decode_macros.h>
 #include <disasm.h>
 
 #include "elfloader.h"
@@ -80,23 +81,60 @@ void Spike::mem_read(uint32_t addr, uint32_t *out) {
                            addr, *out);
 }
 
-void Spike::instruction_fetch(uint32_t addr, uint32_t *data) {
+void Spike::instruction_fetch(uint32_t pc, uint32_t *data) {
   auto spike_state = processor.get_state();
   reg_t spike_pc = spike_state->pc;
   auto spike_fetch = processor.get_mmu()->load_insn(spike_pc);
   uint32_t spike_raw_insn = spike_fetch.insn.bits();
 
+  CHECK_S(pc == spike_pc) << fmt::format(
+      "spike is fetching instruction from 0x{:08X} while rtl is "
+      "fetching from 0x{:08X}.",
+      spike_pc, pc);
+
   LOG(INFO) << fmt::format(
-      "[spike]\t spike fetched 0x{:08X} ({}) and responsed to rtl.\n",
+      "[spike]\t spike fetched 0x{:08X} ({}) and responsed to rtl.",
       spike_raw_insn,
       processor.get_disassembler()->disassemble(spike_fetch.insn));
 
   *data = spike_raw_insn;
 
-  /* TODO: record commit log. */
+  step(spike_fetch);
+  LOG(INFO) << fmt::format(
+      "[spike]\t spike executed it and logged uarch changes.");
+}
 
-  /* clear processor state. */
-  spike_state->log_reg_write.clear();
-  spike_state->log_mem_read.clear();
-  spike_state->log_mem_write.clear();
+static void commit_log_reset(processor_t *p) {
+  p->get_state()->log_reg_write.clear();
+  p->get_state()->log_mem_read.clear();
+  p->get_state()->log_mem_write.clear();
+}
+
+void Spike::step(insn_fetch_t fetch) {
+  auto state = processor.get_state();
+  reg_t pc;
+
+  do {
+    commit_log_reset(&processor);
+    pc = fetch.func(&processor, fetch.insn, state->pc);
+    if (pc & 1) {
+      // some weird Spike mechanics that we need to bypass.
+      switch (pc) {
+      case PC_SERIALIZE_BEFORE:
+        state->serialized = true;
+        break;
+      case PC_SERIALIZE_AFTER:
+        break;
+      default:
+        CHECK_S(false) << fmt::format("invalid pc (0x{:08X}).", pc);
+      }
+    } else
+      break;
+  } while (true);
+  state->pc = pc;
+
+  /* record all uarch changes. */
+  log_reg_write_queue.push_back(state->log_reg_write);
+  log_mem_read_queue.push_back(state->log_mem_read);
+  log_mem_write_queue.push_back(state->log_mem_write);
 }
