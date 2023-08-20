@@ -29,12 +29,12 @@ class Cosim(dut: => Core) extends RawModule {
   dutInstance.reset := read(clockGen.reset)
 
   dpiInstructionFetch.clock.ref := clock
-  dpiInstructionFetch.requestValid.ref := tapAndRead(dutInstance.instructionFetch.request.valid)
+  dpiInstructionFetch.requestValid.ref := tapAndRead(dutInstance.instructionFetch.request.valid) && !reset
   dpiInstructionFetch.address.ref := tapAndRead(dutInstance.instructionFetch.request.bits.address)
   dutInstance.instructionFetch.response.data := dpiInstructionFetch.data.ref
 
   dpiLoadStore.clock.ref := clock
-  dpiLoadStore.requestValid.ref := tapAndRead(dutInstance.loadStore.request.valid)
+  dpiLoadStore.requestValid.ref := tapAndRead(dutInstance.loadStore.request.valid) && !reset
   dpiLoadStore.address.ref := tapAndRead(dutInstance.loadStore.request.bits.address)
   dpiLoadStore.writeEnable.ref := tapAndRead(dutInstance.loadStore.request.bits.writeEnable)
   dpiLoadStore.maskByte.ref := tapAndRead(dutInstance.loadStore.request.bits.maskByte)
@@ -43,8 +43,8 @@ class Cosim(dut: => Core) extends RawModule {
   dutInstance.loadStore.response.bits.data := dpiLoadStore.loadData.ref
 
   dpiRegFileWrite.clock.ref := clock
-  dpiRegFileWrite.writeValid.ref := read(dutInstance.rfWriteValid)
-  dpiRegFileWrite.writeValid.ref := read(dutInstance.rfWriteValid)
+  dpiRegFileWrite.writeValid.ref := read(dutInstance.rfWriteValid) && !reset
+  dpiRegFileWrite.writeValid.ref := read(dutInstance.rfWriteValid) && !reset
   dpiRegFileWrite.isFp.ref := read(dutInstance.rfWriteFp)
   dpiRegFileWrite.isVector.ref := read(dutInstance.rfWriteVector)
   dpiRegFileWrite.data.ref := read(dutInstance.rfWriteData)
