@@ -3,6 +3,7 @@
 #include <svdpi.h>
 
 #include "bridge.h"
+#include "exceptions.h"
 #include "glog.h"
 #include "utils.h"
 
@@ -13,12 +14,21 @@
 #define TRY(statement)                                                         \
   try {                                                                        \
     statement;                                                                 \
-  } catch (std::runtime_error & e) {                                           \
+  } catch (const ReturnException &e) {                                         \
     LOG(INFO) << fmt::format(                                                  \
-        "emulator detect an exception ({}), gracefully aborting...",           \
-        e.what());                                                             \
+        "[dpi]\t emulator return, gracefully aborting...");                    \
+    svSetScope(svGetScopeFromName("TOP.Cosim.dpiFinish"));                     \
+    finish();                                                                  \
+  } catch (const TimeoutException &e) {                                        \
+    LOG(INFO) << fmt::format(                                                  \
+        "[dpi]\t emulator timeout, gracefully aborting...");                   \
     svSetScope(svGetScopeFromName("TOP.Cosim.dpiError"));                      \
-    error(e.what());                                                           \
+    error("timeout");                                                          \
+  } catch (...) {                                                              \
+    LOG(INFO) << fmt::format("[dpi]\t emulator detected an unknown "           \
+                             "exception, gracefully aborting...");             \
+    svSetScope(svGetScopeFromName("TOP.Cosim.dpiError"));                      \
+    error("unknown error");                                                    \
   }
 
 static Bridge bridge = Bridge();

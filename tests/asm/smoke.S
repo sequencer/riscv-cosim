@@ -3,5 +3,5 @@ start:
     addi x1, x1, 1
 
 exit:
-    # Magic instruction to end simulation.
-    csrwi 0x7cc, 0
+    # cosim exit instruction.
+    .word 0x0000007f

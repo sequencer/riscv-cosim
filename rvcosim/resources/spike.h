@@ -3,6 +3,7 @@
 #include <mmu.h>
 #include <processor.h>
 
+#include "custom.h"
 #include "sim.h"
 
 /* Our very own Spike machine. */
@@ -23,11 +24,9 @@ private:
   isa_parser_t isa_parser;
   cfg_t cfg;
   processor_t processor;
+  cosim_extension_t custom;
 
   std::vector<commit_log_reg_t> log_reg_write_queue;
   std::vector<commit_log_mem_t> log_mem_read_queue;
   std::vector<commit_log_mem_t> log_mem_write_queue;
 };
-
-// Write this CSR to end simulation.
-constexpr uint32_t CSR_MSIMEND = 0x7cc;

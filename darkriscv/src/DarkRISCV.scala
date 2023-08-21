@@ -188,6 +188,7 @@ object RunDarkRISCV extends App {
   // todo: copy from resource dir to verilator dir
   val allCSourceFiles = Seq(
     "bridge.cc",
+    "custom.cc",
     "dpi.cc",
     "spike.cc"
   ).map { f =>
@@ -197,7 +198,9 @@ object RunDarkRISCV extends App {
 
   val allCHeaderFiles = Seq(
     "bridge.h",
+    "custom.h",
     "elfloader.h",
+    "exceptions.h",
     "glog.h",
     "sim.h",
     "spike.h",

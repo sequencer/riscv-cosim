@@ -31,13 +31,13 @@ Spike::Spike()
                 true,        /* halt_on_reset */
                 nullptr,     /* log_file_t */
                 std::cerr    /* sout */
-      ) {
+                ),
+      custom() {
   /* initialize processor state. */
   LOG(INFO) << fmt::format("[spike]\t spike read isa string: {}",
                            env("COSIM_isa"));
   auto &csrmap = processor.get_state()->csrmap;
-  csrmap[CSR_MSIMEND] =
-      std::make_shared<basic_csr_t>(&processor, CSR_MSIMEND, 0);
+  processor.register_extension(&custom);
   processor.enable_log_commits();
 
   processor.reset();
@@ -93,10 +93,10 @@ void Spike::instruction_fetch(uint32_t pc, uint32_t *data) {
       spike_pc, pc);
 
   LOG(INFO) << fmt::format(
-      "[spike]\t spike fetched 0x{:08X} ({}) and responsed to rtl.",
+      "[spike]\t spike fetched 0x{:08X} ({}) from address 0x{:08X} and "
+      "responsed to rtl.",
       spike_raw_insn,
-      processor.get_disassembler()->disassemble(spike_fetch.insn));
-
+      processor.get_disassembler()->disassemble(spike_fetch.insn), spike_pc);
   *data = spike_raw_insn;
 
   step(spike_fetch);
