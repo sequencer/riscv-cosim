@@ -500,7 +500,7 @@ module darkriscv
     `endif
 
 `else
-        NXPC <= XRES ? `__RESETPC__ : HLT ? NXPC :   // reset and halt
+        NXPC <= XRES ? `__RESETPC__ : (HLT || FLUSH) ? NXPC :   // reset and halt
               JREQ ? JVAL :                   // jmp/bra
                      NXPC+4;                   // normal flow
 `endif
