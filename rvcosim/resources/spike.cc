@@ -37,12 +37,10 @@ Spike::Spike()
                 ),
       custom() {
   /* initialize processor state. */
-  LOG(INFO) << fmt::format("[spike]\t spike read isa string: {}",
-                           env("COSIM_isa"));
+  LOG(INFO) << fmt::format("[spike]\t spike read isa string: {}", env("COSIM_isa"));
   auto &csrmap = processor.get_state()->csrmap;
   processor.register_extension(&custom);
-  csrmap[CSR_MSIMEND] =
-      std::make_shared<basic_csr_t>(&processor, CSR_MSIMEND, 0);
+  csrmap[CSR_MSIMEND] = std::make_shared<basic_csr_t>(&processor, CSR_MSIMEND, 0);
   processor.enable_log_commits();
 
   processor.reset();
@@ -61,9 +59,8 @@ Spike::Spike()
 
   /* setup entrypoint */
   processor.get_state()->pc = reset_vector_addr;
-  LOG(INFO) << fmt::format(
-      "[spike]\t spike loaded elf file {}, entrypoint is 0x{:08X}.", elfpath,
-      entry);
+  LOG(INFO) << fmt::format("[spike]\t spike loaded elf file {}, entrypoint is 0x{:08X}.", elfpath,
+                           entry);
 
   /* setup reset vector: `J <entrypoint>` */
 
@@ -75,8 +72,7 @@ Spike::Spike()
   *(uint32_t *)sim.addr_to_mem(reset_vector_addr) =
       0x6f | (((entry >> 20) & 1) << 31) | (((entry >> 1) & 0x3ff) << 21) |
       (((entry >> 11) & 1) << 20) | (((entry >> 12) & 0xff) << 12);
-  LOG(INFO) << fmt::format("[spike]\t spike added reset vector at mem@{}.",
-                           reset_vector_addr);
+  LOG(INFO) << fmt::format("[spike]\t spike added reset vector at mem@{}.", reset_vector_addr);
 }
 
 void Spike::mem_read(uint32_t addr, uint32_t *out) {
@@ -94,15 +90,13 @@ void Spike::instruction_fetch(uint32_t pc, uint32_t *data) {
 
   uint32_t spike_raw_insn = is_exiting ? raw_nop : spike_fetch.insn.bits();
 
-  CHECK_S(pc == spike_pc) << fmt::format(
-      "spike is fetching instruction from 0x{:08X} while rtl is "
-      "fetching from 0x{:08X}.",
-      spike_pc, pc);
+  CHECK_S(pc == spike_pc) << fmt::format("spike is fetching instruction from 0x{:08X} while rtl is "
+                                         "fetching from 0x{:08X}.",
+                                         spike_pc, pc);
 
-  LOG(INFO) << fmt::format(
-      "[spike]\t spike fetched 0x{:08X} ({}) from address 0x{:08X}.",
-      spike_raw_insn,
-      processor.get_disassembler()->disassemble(spike_fetch.insn), spike_pc);
+  LOG(INFO) << fmt::format("[spike]\t spike fetched 0x{:08X} ({}) from address 0x{:08X}.",
+                           spike_raw_insn,
+                           processor.get_disassembler()->disassemble(spike_fetch.insn), spike_pc);
 
   if (is_exiting)
     spike_state->pc += 4;
@@ -115,8 +109,7 @@ void Spike::instruction_fetch(uint32_t pc, uint32_t *data) {
   if (is_exiting) {
     auto state = processor.get_state();
     /* cosim is exiting, first check is all queue is empty, if so, exit. */
-    if (log_reg_write_queue.size() || log_reg_write_queue.size() ||
-        log_reg_write_queue.size()) {
+    if (log_reg_write_queue.size() || log_reg_write_queue.size() || log_reg_write_queue.size()) {
       *data = raw_nop;
       LOG(INFO) << fmt::format("[spike]\t spike done execution, cosim is "
                                "exiting, feed a nop to rtl.");
@@ -124,8 +117,7 @@ void Spike::instruction_fetch(uint32_t pc, uint32_t *data) {
       throw ExitException(); /* gracefully exit. */
   } else {
     *data = spike_raw_insn;
-    LOG(INFO) << fmt::format(
-        "[spike]\t spike done execution, feed fetched instruction to rtl.");
+    LOG(INFO) << fmt::format("[spike]\t spike done execution, feed fetched instruction to rtl.");
   }
 }
 
@@ -174,8 +166,7 @@ void Spike::step(insn_fetch_t fetch) {
   }
 
   /* record uarch changes. */
-  if (state->log_reg_write.size() || state->log_mem_read.size() ||
-      state->log_mem_write.size()) {
+  if (state->log_reg_write.size() || state->log_mem_read.size() || state->log_mem_write.size()) {
     if (state->log_reg_write.size())
       log_reg_write_queue.push_back(state->log_reg_write);
     if (state->log_mem_write.size())
@@ -186,7 +177,6 @@ void Spike::step(insn_fetch_t fetch) {
 
     LOG(INFO) << fmt::format("[spike]\t uarch changes detected, logged.");
   } else {
-    LOG(INFO) << fmt::format(
-        "[spike]\t uarch changes not detected for this instruction.");
+    LOG(INFO) << fmt::format("[spike]\t uarch changes not detected for this instruction.");
   }
 }

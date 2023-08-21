@@ -9,9 +9,7 @@
 
 enum RegClass { GPR = 0, FPR = 1, VRF = 2 };
 
-inline RegClass to_reg_class(bool fp, bool vector) {
-  return (RegClass)(fp + (vector << 1));
-}
+inline RegClass to_reg_class(bool fp, bool vector) { return (RegClass)(fp + (vector << 1)); }
 
 inline const char *reg_class_name(RegClass rc) {
   switch (rc) {

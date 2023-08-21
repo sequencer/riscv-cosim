@@ -12,8 +12,7 @@ public:
 
 class LogMessageFatal_S : public LogMessage {
 public:
-  LogMessageFatal_S(const char *file, int line)
-      : LogMessage(file, line, GLOG_ERROR){};
+  LogMessageFatal_S(const char *file, int line) : LogMessage(file, line, GLOG_ERROR){};
   LogMessageFatal_S(const char *file, int line, const CheckOpString &result)
       : LogMessage(file, line, GLOG_ERROR) {
     stream() << "Check failed: " << (*result.str_) << " ";
@@ -26,8 +25,7 @@ public:
 
 } // namespace google
 
-#define CHECK_S(condition)                                                     \
-  LOG_IF(FATAL_S, GOOGLE_PREDICT_BRANCH_NOT_TAKEN(!(condition)))               \
-      << "Check failed: " #condition " "
+#define CHECK_S(condition)                                                                         \
+  LOG_IF(FATAL_S, GOOGLE_PREDICT_BRANCH_NOT_TAKEN(!(condition))) << "Check failed: " #condition " "
 
 #define COMPACT_GOOGLE_LOG_FATAL_S google::LogMessageFatal_S(__FILE__, __LINE__)

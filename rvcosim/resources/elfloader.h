@@ -15,8 +15,7 @@ template <> inline int elfclass<true>() { return ELFCLASS32; }
 template <> inline int elfclass<false>() { return ELFCLASS64; }
 
 /* A naive elf loader. */
-template <bool S>
-ElfResult load_elf(const std::string &filename, char *mem, uint64_t memsize) {
+template <bool S> ElfResult load_elf(const std::string &filename, char *mem, uint64_t memsize) {
   typedef typename std::conditional<S, Elf32_Ehdr, Elf64_Ehdr>::type elf_ehdr_t;
   typedef typename std::conditional<S, Elf32_Phdr, Elf64_Phdr>::type elf_phdr_t;
   std::ifstream fs(filename, std::ios::binary);
@@ -31,8 +30,7 @@ ElfResult load_elf(const std::string &filename, char *mem, uint64_t memsize) {
   for (size_t i = 0; i < ehdr.e_phnum; i++) {
     auto phdr_offset = ehdr.e_phoff + i * ehdr.e_phentsize;
     elf_phdr_t phdr;
-    fs.seekg((long)phdr_offset)
-        .read(reinterpret_cast<char *>(&phdr), sizeof(phdr));
+    fs.seekg((long)phdr_offset).read(reinterpret_cast<char *>(&phdr), sizeof(phdr));
     if (phdr.p_type == PT_LOAD) {
       CHECK_S(phdr.p_paddr + phdr.p_filesz < memsize);
       fs.seekg((long)phdr.p_offset)
