@@ -1,18 +1,17 @@
 #include "custom.h"
+#include "csr.h"
 #include "glog.h"
 
 /*
-# rv_cosim custom extension
-cosim_exit imm20 11..7=0 6..2=0x1F 1..0=3
-*/
+ * # rv_cosim custom extension
+ * cosim.exit imm20 11..7=0 6..2=0x1F 1..0=3
+ */
 
 static reg_t exit_insn(processor_t *p, insn_t insn, reg_t pc) {
-  LOG(INFO) << fmt::format(
-      "[spike]\t custom exit instruction at pc 0x{:08X}, exiting with code {}",
-      pc, insn.u_imm());
-  throw ReturnException();
-
-  // unreachable
+  LOG(INFO) << fmt::format("[spike]\t custom exit instruction at pc 0x{:08X} "
+                           "with code {}, switched to exiting mode.",
+                           pc, insn.u_imm());
+  p->put_csr(CSR_MSIMEND, 1);
   return pc + 4;
 }
 

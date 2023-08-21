@@ -14,7 +14,7 @@
 #define TRY(statement)                                                         \
   try {                                                                        \
     statement;                                                                 \
-  } catch (const ReturnException &e) {                                         \
+  } catch (const ExitException &e) {                                           \
     LOG(INFO) << fmt::format(                                                  \
         "[dpi]\t emulator return, gracefully aborting...");                    \
     svSetScope(svGetScopeFromName("TOP.Cosim.dpiFinish"));                     \

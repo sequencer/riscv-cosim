@@ -1,12 +1,15 @@
 #include <decode_macros.h>
 #include <disasm.h>
 
+#include "csr.h"
 #include "elfloader.h"
 #include "spike.h"
 #include "utils.h"
 
 /* FIXME: make this configurable at runtime (?) */
-const uint32_t reset_vector_addr = 0;
+static const uint32_t reset_vector_addr = 0;
+
+static const uint32_t raw_nop = 0x13;
 
 Spike::Spike()
     : sim(1 << (10 + 10 + 6)), /* 64M memory should be enough for now. */
@@ -38,6 +41,8 @@ Spike::Spike()
                            env("COSIM_isa"));
   auto &csrmap = processor.get_state()->csrmap;
   processor.register_extension(&custom);
+  csrmap[CSR_MSIMEND] =
+      std::make_shared<basic_csr_t>(&processor, CSR_MSIMEND, 0);
   processor.enable_log_commits();
 
   processor.reset();
@@ -85,7 +90,9 @@ void Spike::instruction_fetch(uint32_t pc, uint32_t *data) {
   auto spike_state = processor.get_state();
   reg_t spike_pc = spike_state->pc;
   auto spike_fetch = processor.get_mmu()->load_insn(spike_pc);
-  uint32_t spike_raw_insn = spike_fetch.insn.bits();
+  bool is_exiting = processor.get_csr(CSR_MSIMEND);
+
+  uint32_t spike_raw_insn = is_exiting ? raw_nop : spike_fetch.insn.bits();
 
   CHECK_S(pc == spike_pc) << fmt::format(
       "spike is fetching instruction from 0x{:08X} while rtl is "
@@ -93,15 +100,33 @@ void Spike::instruction_fetch(uint32_t pc, uint32_t *data) {
       spike_pc, pc);
 
   LOG(INFO) << fmt::format(
-      "[spike]\t spike fetched 0x{:08X} ({}) from address 0x{:08X} and "
-      "responsed to rtl.",
+      "[spike]\t spike fetched 0x{:08X} ({}) from address 0x{:08X}.",
       spike_raw_insn,
       processor.get_disassembler()->disassemble(spike_fetch.insn), spike_pc);
-  *data = spike_raw_insn;
 
-  step(spike_fetch);
-  LOG(INFO) << fmt::format(
-      "[spike]\t spike executed it and logged uarch changes.");
+  if (is_exiting)
+    spike_state->pc += 4;
+  else
+    step(spike_fetch);
+
+  /* after spike execution, check if cosim is exiting. if so, feed rtl with a
+   * nop to let it continue. */
+  is_exiting = processor.get_csr(CSR_MSIMEND);
+  if (is_exiting) {
+    auto state = processor.get_state();
+    /* cosim is exiting, first check is all queue is empty, if so, exit. */
+    if (log_reg_write_queue.size() || log_reg_write_queue.size() ||
+        log_reg_write_queue.size()) {
+      *data = raw_nop;
+      LOG(INFO) << fmt::format("[spike]\t spike done execution, cosim is "
+                               "exiting, feed a nop to rtl.");
+    } else
+      throw ExitException(); /* gracefully exit. */
+  } else {
+    *data = spike_raw_insn;
+    LOG(INFO) << fmt::format(
+        "[spike]\t spike done execution, feed fetched instruction to rtl.");
+  }
 }
 
 static void commit_log_reset(processor_t *p) {
@@ -133,8 +158,35 @@ void Spike::step(insn_fetch_t fetch) {
   } while (true);
   state->pc = pc;
 
-  /* record all uarch changes. */
-  log_reg_write_queue.push_back(state->log_reg_write);
-  log_mem_read_queue.push_back(state->log_mem_read);
-  log_mem_write_queue.push_back(state->log_mem_write);
+  /* ignore write to CSR_MSIMEND. */
+  for (auto item : state->log_reg_write) {
+    if ((item.first & 0xf) == 4 /* CSR */ && (item.first >> 4) == CSR_MSIMEND) {
+      state->log_reg_write.erase(item.first);
+      break;
+    }
+  }
+  /* ignore write to x0. */
+  for (auto item : state->log_reg_write) {
+    if ((item.first & 0xf) == 0 /* GPR */ && (item.first >> 4) == 0) {
+      state->log_reg_write.erase(item.first);
+      break;
+    }
+  }
+
+  /* record uarch changes. */
+  if (state->log_reg_write.size() || state->log_mem_read.size() ||
+      state->log_mem_write.size()) {
+    if (state->log_reg_write.size())
+      log_reg_write_queue.push_back(state->log_reg_write);
+    if (state->log_mem_write.size())
+      log_mem_read_queue.push_back(state->log_mem_read);
+
+    if (state->log_mem_read.size())
+      log_mem_write_queue.push_back(state->log_mem_write);
+
+    LOG(INFO) << fmt::format("[spike]\t uarch changes detected, logged.");
+  } else {
+    LOG(INFO) << fmt::format(
+        "[spike]\t uarch changes not detected for this instruction.");
+  }
 }

@@ -12,7 +12,7 @@ public:
   TimeoutException() : CosimException("timeout") {}
 };
 
-class ReturnException : CosimException {
+class ExitException : CosimException {
 public:
-  ReturnException() : CosimException("returned") {}
+  ExitException() : CosimException("returned") {}
 };
