@@ -15,5 +15,6 @@ class LoadStore(p: LoadStoreParameter) extends DPIModule {
 
   val responseValid = dpiOut("responseValid", Output(Bool()))
   val loadData = dpiOut("loadData", Output(UInt(p.dataWidth.W)))
-  override val trigger = s"always @(negedge ${clock.name}, ${requestValid.name})"
+  override val trigger = s"always @(negedge ${clock.name})"
+  override val guard: String = s"""${requestValid.name}"""
 }

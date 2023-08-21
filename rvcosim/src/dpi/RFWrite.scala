@@ -11,5 +11,6 @@ class RegFileWrite extends DPIModule {
   val address = dpiIn("address", Input(UInt(chisel3.util.log2Ceil(32).W)))
   val data = dpiIn("data", Input(UInt(32.W)))
 
-  override val trigger: String = s"""always @(negedge ${clock.name}, ${writeValid.name})""".stripMargin
+  override val trigger: String = s"""always @(negedge ${clock.name})""".stripMargin
+  override val guard: String = s"""${writeValid.name}"""
 }

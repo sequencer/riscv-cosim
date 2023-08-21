@@ -11,5 +11,6 @@ class InstructionFetch(p: InstructionFetchParameter) extends DPIModule {
   val address = dpiIn("address", Input(UInt(p.addressWidth.W)))
   val data = dpiOut("data", Output(UInt(p.dataWidth.W)))
 
-  override val trigger: String = s"""always @(negedge ${clock.name}, ${requestValid.name})""".stripMargin
+  override val trigger: String = s"""always @(negedge ${clock.name})""".stripMargin
+  override val guard: String = s"""${requestValid.name}"""
 }
