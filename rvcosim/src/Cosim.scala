@@ -16,7 +16,7 @@ class Cosim(dut: => Core) extends RawModule {
   val clockGen = Module(new ClockGen(ClockGenParameter(parameter.clockRate)))
   val dpiInitCosim = Module(new InitCosim)
   val dpiTimeoutCheck = Module(new TimeoutCheck(TimeoutCheckParameter(parameter.clockRate)))
-  val dpiInstructionFetch = Module(new InstructionFetch(InstructionFetchParameter(dutInstance.parameter.ifAddressWidth, dutInstance.parameter.ifDataWidth)))
+  val dpiInstructionROM = Module(new InstructionRom(InstructionRomParameter(dutInstance.parameter.ifAddressWidth, dutInstance.parameter.ifDataWidth)))
   val dpiLoadStore = Module(new LoadStore(LoadStoreParameter(dutInstance.parameter.ifAddressWidth, dutInstance.parameter.ifDataWidth)))
   val dpiRegFileWrite = Module(new RegFileWrite)
   val dpiDumpWave = Module(new DumpWave)
@@ -28,10 +28,8 @@ class Cosim(dut: => Core) extends RawModule {
   dutInstance.clock := read(clockGen.clock).asClock
   dutInstance.reset := read(clockGen.reset)
 
-  dpiInstructionFetch.clock.ref := clock
-  dpiInstructionFetch.requestValid.ref := tapAndRead(dutInstance.instructionFetch.request.valid) && !reset
-  dpiInstructionFetch.address.ref := tapAndRead(dutInstance.instructionFetch.request.bits.address)
-  dutInstance.instructionFetch.response.data := dpiInstructionFetch.data.ref
+  dpiInstructionROM.address.ref := tapAndRead(dutInstance.instructionFetch.request.bits.address)
+  dutInstance.instructionFetch.response.data := dpiInstructionROM.data.ref
 
   dpiLoadStore.clock.ref := clock
   dpiLoadStore.requestValid.ref := tapAndRead(dutInstance.loadStore.request.valid) && !reset

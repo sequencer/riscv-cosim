@@ -33,6 +33,14 @@
 
 static Bridge bridge = Bridge();
 
+DPI void instruction_rom(IN svBitVecVal /* <32> */ *addr,
+                         OUT svBitVecVal /* <32> */ *data) {
+  LOG(INFO) << fmt::format(
+      "[dpi]\t @{} rtl wants to fetch an instruction from address 0x{:08X}.",
+      bridge.cycle(), (uint32_t)*addr);
+  TRY({ bridge.instruction_fetch((uint32_t)*addr, (uint32_t *)data); });
+}
+
 DPI void instruction_fetch(IN svBitVecVal /* <32> */ *addr,
                            OUT svBitVecVal /* <32> */ *data) {
 

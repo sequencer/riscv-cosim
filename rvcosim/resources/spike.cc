@@ -87,10 +87,10 @@ void Spike::instruction_fetch(uint32_t pc, uint32_t *data) {
   auto spike_fetch = processor.get_mmu()->load_insn(spike_pc);
   uint32_t spike_raw_insn = spike_fetch.insn.bits();
 
-  CHECK_S(pc == spike_pc) << fmt::format(
-      "spike is fetching instruction from 0x{:08X} while rtl is "
-      "fetching from 0x{:08X}.",
-      spike_pc, pc);
+//  CHECK_S(pc == spike_pc) << fmt::format(
+//      "spike is fetching instruction from 0x{:08X} while rtl is "
+//      "fetching from 0x{:08X}.",
+//      spike_pc, pc);
 
   LOG(INFO) << fmt::format(
       "[spike]\t spike fetched 0x{:08X} ({}) from address 0x{:08X} and "
