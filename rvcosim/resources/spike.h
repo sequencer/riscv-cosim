@@ -3,6 +3,7 @@
 #include <mmu.h>
 #include <processor.h>
 
+#include "consts.h"
 #include "custom.h"
 #include "sim.h"
 
@@ -11,6 +12,7 @@ class Spike {
 public:
   Spike();
 
+  void reg_write(RegClass rc, int n, uint32_t data);
   void mem_read(uint32_t addr, uint32_t *out);
   bool instruction_fetch(uint32_t pc, uint32_t *data);
 

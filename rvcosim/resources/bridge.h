@@ -7,23 +7,6 @@
 #include "glog.h"
 #include "spike.h"
 
-enum RegClass { GPR = 0, FPR = 1, VRF = 2 };
-
-inline RegClass to_reg_class(bool fp, bool vector) { return (RegClass)(fp + (vector << 1)); }
-
-inline const char *reg_class_name(RegClass rc) {
-  switch (rc) {
-  case GPR:
-    return "gpr";
-  case FPR:
-    return "fpr";
-  case VRF:
-    return "vrf";
-  default:
-    CHECK_S(false) << fmt::format("unreachable");
-  }
-}
-
 /* A bridge between Spike and DPI. */
 class Bridge {
 public:

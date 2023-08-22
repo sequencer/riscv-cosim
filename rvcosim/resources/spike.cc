@@ -1,7 +1,6 @@
 #include <decode_macros.h>
 #include <disasm.h>
 
-#include "csr.h"
 #include "elfloader.h"
 #include "spike.h"
 #include "utils.h"
@@ -72,6 +71,34 @@ Spike::Spike()
       0x6f | (((entry >> 20) & 1) << 31) | (((entry >> 1) & 0x3ff) << 21) |
       (((entry >> 11) & 1) << 20) | (((entry >> 12) & 0xff) << 12);
   LOG(INFO) << fmt::format("[spike] added reset vector at mem@{}.", reset_vector_addr);
+}
+
+void Spike::reg_write(RegClass rc, int n, uint32_t data) {
+  if (rc == RegClass::GPR && n == 0) {
+    LOG(INFO) << fmt::format("[spike] ignore write to x0.");
+    return;
+  }
+
+  CHECK_S(rc == RegClass::GPR) << fmt::format("only write to gpr is supported.");
+
+  CHECK_S(log_reg_write_queue.size()) << fmt::format(
+      "rtl write to {}#{} with value 0x{:08X} while spike doesn't recorded this change.",
+      reg_class_name(rc), n, data);
+  bool found = false;
+  for (auto item : log_reg_write_queue[0]) {
+    if ((item.first & 0xf) == RegClass::GPR && (item.first >> 4) == n) {
+      CHECK_S(data == (uint32_t)(item.second.v[0])) << fmt::format(
+          "rtl write to {}#{} with value 0x{:08X} while spike recorded value 0x{:08X}.",
+          reg_class_name(rc), n, data, (uint32_t)item.second.v[0]);
+      log_reg_write_queue[0].erase(item.first);
+      found = true;
+      break;
+    }
+  }
+
+  CHECK_S(found) << fmt::format(
+      "rtl write to {}#{} with value 0x{:08X} while spike doesn't recorded this change.",
+      reg_class_name(rc), n, data);
 }
 
 void Spike::mem_read(uint32_t addr, uint32_t *out) {
@@ -152,14 +179,14 @@ void Spike::step(insn_fetch_t fetch) {
 
   /* ignore write to CSR_MSIMEND. */
   for (auto item : state->log_reg_write) {
-    if ((item.first & 0xf) == 4 /* CSR */ && (item.first >> 4) == CSR_MSIMEND) {
+    if ((item.first & 0xf) == RegClass::CSR && (item.first >> 4) == CSR_MSIMEND) {
       state->log_reg_write.erase(item.first);
       break;
     }
   }
   /* ignore write to x0. */
   for (auto item : state->log_reg_write) {
-    if ((item.first & 0xf) == 0 /* GPR */ && (item.first >> 4) == 0) {
+    if ((item.first & 0xf) == RegClass::GPR && (item.first >> 4) == 0) {
       state->log_reg_write.erase(item.first);
       break;
     }

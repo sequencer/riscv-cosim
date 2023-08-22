@@ -3,6 +3,7 @@
 #include <svdpi.h>
 
 #include "bridge.h"
+#include "consts.h"
 #include "exceptions.h"
 #include "glog.h"
 #include "utils.h"

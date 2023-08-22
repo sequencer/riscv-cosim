@@ -198,7 +198,7 @@ object RunDarkRISCV extends App {
 
   val allCHeaderFiles = Seq(
     "bridge.h",
-    "csr.h",
+    "consts.h",
     "custom.h",
     "elfloader.h",
     "exceptions.h",

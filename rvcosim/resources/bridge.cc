@@ -10,16 +10,7 @@ void Bridge::instruction_fetch(uint32_t addr, uint32_t *data) {
   }
 }
 
-void Bridge::reg_write(RegClass rc, int n, uint32_t data) {
-  if (rc == RegClass::GPR && n == 0) {
-    LOG(INFO) << fmt::format("[bridge] @{} ignore write to x0.", cycle());
-    return;
-  }
-
-  CHECK_S(rc == RegClass::GPR) << fmt::format("write to fpr/vrf is NYI.");
-
-  CHECK_S(false) << fmt::format("reg_write() is NYI.");
-}
+void Bridge::reg_write(RegClass rc, int n, uint32_t data) { spike->reg_write(rc, n, data); }
 
 void Bridge::mem_read(uint32_t addr, uint32_t *out) { spike->mem_read(addr, out); }
 
