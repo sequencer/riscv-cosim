@@ -12,23 +12,23 @@ void Bridge::instruction_fetch(uint32_t addr, uint32_t *data) {
 
 void Bridge::reg_write(RegClass rc, int n, uint32_t data) {
   if (rc == RegClass::GPR && n == 0) {
-    LOG(INFO) << fmt::format("[bridge]\t @{} ignore write to x0.", cycle());
+    LOG(INFO) << fmt::format("[bridge] @{} ignore write to x0.", cycle());
     return;
   }
 
-  CHECK_S(rc == RegClass::GPR) << fmt::format("write to fpr/vrf is not yet implemented.");
+  CHECK_S(rc == RegClass::GPR) << fmt::format("write to fpr/vrf is NYI.");
 
-  CHECK_S(false) << fmt::format("reg_write() is not yet implemented.");
+  CHECK_S(false) << fmt::format("reg_write() is NYI.");
 }
 
 void Bridge::mem_read(uint32_t addr, uint32_t *out) { spike->mem_read(addr, out); }
 
-void Bridge::mem_write() { CHECK_S(false) << fmt::format("mem_write() is not yet implemented."); }
+void Bridge::mem_write() { CHECK_S(false) << fmt::format("mem_write() is NYI."); }
 
 void Bridge::timeout_check() {
   if (cycle() > exiting_cycle + timeout) {
     LOG(INFO) << fmt::format(
-        "[bridge]\t cosim is exiting {} cycles ago, but the queue is still not empty, timed out.",
+        "[bridge] cosim is exiting {} cycles ago, but the queue is still not empty, timed out.",
         cycle() - exiting_cycle);
     throw TimeoutException();
   }
