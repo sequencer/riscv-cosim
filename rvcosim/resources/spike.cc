@@ -82,7 +82,7 @@ void Spike::mem_read(uint32_t addr, uint32_t *out) {
                            addr, *out);
 }
 
-void Spike::instruction_fetch(uint32_t pc, uint32_t *data) {
+bool Spike::instruction_fetch(uint32_t pc, uint32_t *data) {
   auto spike_state = processor.get_state();
   reg_t spike_pc = spike_state->pc;
   auto spike_fetch = processor.get_mmu()->load_insn(spike_pc);
@@ -94,9 +94,9 @@ void Spike::instruction_fetch(uint32_t pc, uint32_t *data) {
                                          "fetching from 0x{:08X}.",
                                          spike_pc, pc);
 
-  LOG(INFO) << fmt::format("[spike]\t spike fetched 0x{:08X} ({}) from address 0x{:08X}.",
-                           spike_raw_insn,
-                           processor.get_disassembler()->disassemble(spike_fetch.insn), spike_pc);
+  LOG(INFO) << fmt::format(
+      "[spike]\t spike fetched 0x{:08X} ({}) from address 0x{:08X}.", spike_raw_insn,
+      processor.get_disassembler()->disassemble(insn_t(spike_raw_insn)), spike_pc);
 
   if (is_exiting)
     spike_state->pc += 4;
@@ -119,6 +119,8 @@ void Spike::instruction_fetch(uint32_t pc, uint32_t *data) {
     *data = spike_raw_insn;
     LOG(INFO) << fmt::format("[spike]\t spike done execution, feed fetched instruction to rtl.");
   }
+
+  return is_exiting;
 }
 
 static void commit_log_reset(processor_t *p) {

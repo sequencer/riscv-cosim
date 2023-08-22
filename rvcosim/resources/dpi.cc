@@ -77,10 +77,5 @@ DPI void init_cosim() {
 }
 
 DPI void timeout_check() {
-  /* FIXME: proper implementation. */
-  TRY({
-    if (bridge.cycle() > 50) {
-      LOG(FATAL_S) << fmt::format("[dpi]\t @{} timeout, exiting...", bridge.cycle());
-    }
-  })
+  TRY({ bridge.timeout_check(); })
 }

@@ -12,7 +12,7 @@ public:
   Spike();
 
   void mem_read(uint32_t addr, uint32_t *out);
-  void instruction_fetch(uint32_t pc, uint32_t *data);
+  bool instruction_fetch(uint32_t pc, uint32_t *data);
 
 private:
   /* step Spike forward and log arch changes. */

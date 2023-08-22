@@ -38,11 +38,15 @@ public:
   uint64_t cycle() { return ctx->time(); }
 
   /* --- bridges --- */
+  void instruction_fetch(uint32_t addr, uint32_t *data);
   void reg_write(RegClass rc, int n, uint32_t data);
   void mem_read(uint32_t addr, uint32_t *out);
-  void instruction_fetch(uint32_t addr, uint32_t *data);
+  void mem_write();
+
+  void timeout_check();
 
 private:
   VerilatedContext *ctx = nullptr;
   Spike *spike = nullptr;
+  int64_t exiting_cycle = std::numeric_limits<int64_t>::min();
 };
