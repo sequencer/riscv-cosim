@@ -1,14 +1,15 @@
-package rvcosim
+package rvcosim.darkriscv
 
 import chisel3._
 import chisel3.probe._
-import chisel3.util.experimental.BoringUtils.tapAndRead
+import chisel3.util.experimental.BoringUtils.{bore, tap, tapAndRead}
+import rvcosim._
 import rvcosim.dpi._
 
 case class CosimParameter(clockRate: Int)
-class Cosim(dut: => Core) extends RawModule {
+class Cosim extends RawModule {
   // instantiate the RISC-V Core
-  val dutInstance = Module(dut)
+  val dutInstance = Module(new DarkRISCVSoC)
 
   // The user defined simulation parameter
   def parameter = CosimParameter(clockRate = 2)
@@ -41,10 +42,21 @@ class Cosim(dut: => Core) extends RawModule {
   dutInstance.loadStore.response.bits.data := dpiLoadStore.loadData.ref
 
   dpiRegFileWrite.clock.ref := clock
-  dpiRegFileWrite.writeValid.ref := read(dutInstance.rfWriteValid) && !reset
-  dpiRegFileWrite.writeValid.ref := read(dutInstance.rfWriteValid) && !reset
-  dpiRegFileWrite.isFp.ref := read(dutInstance.rfWriteFp)
-  dpiRegFileWrite.isVector.ref := read(dutInstance.rfWriteVector)
-  dpiRegFileWrite.data.ref := read(dutInstance.rfWriteData)
-  dpiRegFileWrite.address.ref := read(dutInstance.rfWriteAddress)
+  dpiRegFileWrite.writeValid.ref := withClockAndReset(clock.asClock, reset)(
+    RegNext(reset.asBool ||
+      read(bore(dutInstance.darkriscv.lcc)) ||
+      read(bore(dutInstance.darkriscv.auipc)) ||
+      read(bore(dutInstance.darkriscv.jal)) ||
+      read(bore(dutInstance.darkriscv.jalr)) ||
+      read(bore(dutInstance.darkriscv.lui)) ||
+      read(bore(dutInstance.darkriscv.mcc)) ||
+      read(bore(dutInstance.darkriscv.rcc))
+    )
+  )
+  dpiRegFileWrite.isFp.ref := false.B
+  dpiRegFileWrite.isVector.ref := false.B
+  val regs = read(bore(dutInstance.darkriscv.regs))
+  val dptr = read(bore(dutInstance.darkriscv.dptr))
+  dpiRegFileWrite.data.ref := regs(dptr)
+  dpiRegFileWrite.address.ref := dptr
 }

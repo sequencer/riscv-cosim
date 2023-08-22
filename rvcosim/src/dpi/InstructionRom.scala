@@ -4,6 +4,7 @@ import chisel3._
 
 case class InstructionRomParameter(addressWidth: Int, dataWidth: Int)
 
+// TODO: add SimROM and SimRAM in the future.
 class InstructionRom(p: InstructionRomParameter) extends DPIModule {
   val isImport: Boolean = true
   val address = dpiIn("address", Input(UInt(p.addressWidth.W)))

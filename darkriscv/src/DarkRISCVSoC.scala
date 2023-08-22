@@ -1,8 +1,7 @@
-package rvcosim
+package rvcosim.darkriscv
 
 import chisel3._
 import chisel3.util.Valid
-import chisel3.probe._
 
 trait CoreParameter {
   val ifAddressWidth: Int
@@ -40,16 +39,28 @@ class LSUBundle(val parameter: CoreParameter) extends Bundle {
   val response: Valid[Response] = Flipped(Valid(new Response))
 }
 
-abstract class Core extends RawModule {
-  def parameter: CoreParameter
+class DarkRISCVSoC extends RawModule {
   val clock: Clock = IO(Input(Clock()))
   val reset: Reset = IO(Input(Reset()))
   val instructionFetch = IO(new IFBundle(parameter))
   val loadStore = IO(new LSUBundle(parameter))
 
-  val rfWriteValid = IO(RWProbe(Bool()))
-  val rfWriteFp = IO(RWProbe(Bool()))
-  val rfWriteVector = IO(RWProbe(Bool()))
-  val rfWriteData = IO(RWProbe(UInt(32.W)))
-  val rfWriteAddress = IO(RWProbe(UInt(chisel3.util.log2Ceil(32).W)))
+  def parameter: CoreParameter = new DarkRISCVParameter
+
+  val darkriscv = Module(new DarkRISCV)
+  // TODO: construct diplomatic SoC in the future.
+  darkriscv.clock := clock
+  darkriscv.reset := reset
+  darkriscv.halt := false.B
+  darkriscv.idata := instructionFetch.response.data
+  instructionFetch.request.bits.address := darkriscv.iaddr
+  instructionFetch.request.valid := true.B
+  darkriscv.datai := loadStore.response.bits.data
+  loadStore.request.bits.data := darkriscv.datao
+  loadStore.request.bits.address := darkriscv.daddr
+  loadStore.request.bits.maskByte := darkriscv.be
+  loadStore.request.bits.writeEnable := darkriscv.wr
+  loadStore.request.valid := darkriscv.wr || darkriscv.rd
+  // dontcare darkriscv.idle
+  // dontcare debug
 }
