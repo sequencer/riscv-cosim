@@ -2,6 +2,7 @@
 
 #include <fmt/core.h>
 #include <glog/logging.h>
+#include <iomanip>
 
 namespace google {
 
@@ -25,7 +26,9 @@ public:
 
 } // namespace google
 
-#define CHECK_S(condition)                                                                         \
+#define ASSERT(condition)                                                                          \
   LOG_IF(FATAL_S, GOOGLE_PREDICT_BRANCH_NOT_TAKEN(!(condition))) << "Check failed: " #condition " "
+
+#define DUMP(severity, module) LOG(severity) << std::setw(10) << " [" #module "] "
 
 #define COMPACT_GOOGLE_LOG_FATAL_S google::LogMessageFatal_S(__FILE__, __LINE__)

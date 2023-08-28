@@ -8,9 +8,9 @@
  */
 
 static reg_t exit_insn(processor_t *p, insn_t insn, reg_t pc) {
-  LOG(INFO) << fmt::format("[spike] custom exit instruction at pc 0x{:08X} "
-                           "with code {}, switched to exiting mode.",
-                           pc, insn.u_imm());
+  DUMP(INFO, spike) << fmt::format(
+      "custom exit instruction at pc 0x{:08X} with code {}, switched to exiting mode.", pc,
+      insn.u_imm());
   p->put_csr(CSR_MSIMEND, 1);
   return pc + 4;
 }

@@ -13,8 +13,8 @@ public:
   ~Sim() override { delete[] mem; }
 
   char *addr_to_mem(reg_t addr) override {
-    CHECK_S(addr < memsize) << fmt::format("memory out of bound ({:016X} >= {:016X})", addr,
-                                           memsize);
+    ASSERT(addr < memsize) << fmt::format("memory out of bound ({:016X} >= {:016X})", addr,
+                                          memsize);
     return &mem[addr];
   }
 

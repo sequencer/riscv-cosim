@@ -23,6 +23,6 @@ inline const char *reg_class_name(RegClass rc) {
   case CSR:
     return "csr";
   default:
-    CHECK_S(false) << "unreachable";
+    ASSERT(false) << "unreachable";
   }
 }

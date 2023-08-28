@@ -36,7 +36,7 @@ Spike::Spike()
                 ),
       custom() {
   /* initialize processor state. */
-  LOG(INFO) << fmt::format("[spike] read isa string: {}", env("COSIM_isa"));
+  DUMP(INFO, spike) << fmt::format("read isa string: {}", env("COSIM_isa"));
   auto &csrmap = processor.get_state()->csrmap;
   processor.register_extension(&custom);
   csrmap[CSR_MSIMEND] = std::make_shared<basic_csr_t>(&processor, CSR_MSIMEND, 0);
@@ -53,12 +53,12 @@ Spike::Spike()
   } else {
     entry = load_elf<false>(elfpath, sim.mem, sim.memsize).entry;
 
-    CHECK_S(false) << fmt::format("rv64 support is NYI.");
+    ASSERT(false) << fmt::format("rv64 support is NYI.");
   }
 
   /* setup entrypoint */
   processor.get_state()->pc = reset_vector_addr;
-  LOG(INFO) << fmt::format("[spike] loaded elf file {}, entrypoint is 0x{:08X}.", elfpath, entry);
+  DUMP(INFO, spike) << fmt::format("loaded elf file {}, entrypoint is 0x{:08X}.", elfpath, entry);
 
   /* setup reset vector: `J <entrypoint>` */
 
@@ -70,24 +70,24 @@ Spike::Spike()
   *(uint32_t *)sim.addr_to_mem(reset_vector_addr) =
       0x6f | (((entry >> 20) & 1) << 31) | (((entry >> 1) & 0x3ff) << 21) |
       (((entry >> 11) & 1) << 20) | (((entry >> 12) & 0xff) << 12);
-  LOG(INFO) << fmt::format("[spike] added reset vector at mem@{}.", reset_vector_addr);
+  DUMP(INFO, spike) << fmt::format("added reset vector at mem@{}.", reset_vector_addr);
 }
 
 void Spike::reg_write(RegClass rc, int n, uint32_t data) {
   if (rc == RegClass::GPR && n == 0) {
-    LOG(INFO) << fmt::format("[spike] ignore write to x0.");
+    DUMP(INFO, spike) << fmt::format("ignore write to x0.");
     return;
   }
 
-  CHECK_S(rc == RegClass::GPR) << fmt::format("only write to gpr is supported.");
+  ASSERT(rc == RegClass::GPR) << fmt::format("only write to gpr is supported.");
 
-  CHECK_S(log_reg_write_queue.size()) << fmt::format(
+  ASSERT(log_reg_write_queue.size()) << fmt::format(
       "rtl write to {}#{} with value 0x{:08X} while spike doesn't recorded this change.",
       reg_class_name(rc), n, data);
   bool found = false;
   for (auto item : log_reg_write_queue[0]) {
     if ((item.first & 0xf) == RegClass::GPR && (item.first >> 4) == n) {
-      CHECK_S(data == (uint32_t)(item.second.v[0])) << fmt::format(
+      ASSERT(data == (uint32_t)(item.second.v[0])) << fmt::format(
           "rtl write to {}#{} with value 0x{:08X} while spike recorded value 0x{:08X}.",
           reg_class_name(rc), n, data, (uint32_t)item.second.v[0]);
       log_reg_write_queue[0].erase(item.first);
@@ -101,16 +101,16 @@ void Spike::reg_write(RegClass rc, int n, uint32_t data) {
     log_reg_write_queue.erase(log_reg_write_queue.begin());
   }
 
-  CHECK_S(found) << fmt::format(
+  ASSERT(found) << fmt::format(
       "rtl write to {}#{} with value 0x{:08X} while spike doesn't recorded this change.",
       reg_class_name(rc), n, data);
 }
 
 void Spike::mem_read(uint32_t addr, uint32_t *out) {
   *out = *(uint32_t *)sim.addr_to_mem(addr);
-  LOG(INFO) << fmt::format("[spike] read memory at 0x{:08X}, responsed "
-                           "with data 0x{:08X}.",
-                           addr, *out);
+  DUMP(INFO, spike) << fmt::format("read memory at 0x{:08X}, responsed "
+                                   "with data 0x{:08X}.",
+                                   addr, *out);
 }
 
 bool Spike::instruction_fetch(uint32_t pc, uint32_t *data) {
@@ -121,12 +121,12 @@ bool Spike::instruction_fetch(uint32_t pc, uint32_t *data) {
 
   uint32_t spike_raw_insn = is_exiting ? raw_nop : spike_fetch.insn.bits();
 
-  CHECK_S(pc == spike_pc) << fmt::format(
+  ASSERT(pc == spike_pc) << fmt::format(
       "fetching instruction from 0x{:08X} while rtl is fetching from 0x{:08X}.", spike_pc, pc);
 
-  LOG(INFO) << fmt::format("[spike] fetched 0x{:08X} ({}) from address 0x{:08X}.", spike_raw_insn,
-                           processor.get_disassembler()->disassemble(insn_t(spike_raw_insn)),
-                           spike_pc);
+  DUMP(INFO, spike) << fmt::format(
+      "fetched 0x{:08X} ({}) from address 0x{:08X}.", spike_raw_insn,
+      processor.get_disassembler()->disassemble(insn_t(spike_raw_insn)), spike_pc);
 
   if (is_exiting)
     spike_state->pc += 4;
@@ -141,13 +141,13 @@ bool Spike::instruction_fetch(uint32_t pc, uint32_t *data) {
     /* cosim is exiting, first check is all queue is empty, if so, exit. */
     if (log_reg_write_queue.size() || log_mem_read_queue.size() || log_mem_write_queue.size()) {
       *data = raw_nop;
-      LOG(INFO) << fmt::format("[spike] done execution, cosim is "
-                               "exiting, feed a nop to rtl.");
+      DUMP(INFO, spike) << fmt::format("done execution, cosim is "
+                                       "exiting, feed a nop to rtl.");
     } else
       throw ExitException(); /* gracefully exit. */
   } else {
     *data = spike_raw_insn;
-    LOG(INFO) << fmt::format("[spike] done execution, feed fetched instruction to rtl.");
+    DUMP(INFO, spike) << fmt::format("done execution, feed fetched instruction to rtl.");
   }
 
   return is_exiting;
@@ -175,7 +175,7 @@ void Spike::step(insn_fetch_t fetch) {
       case PC_SERIALIZE_AFTER:
         break;
       default:
-        CHECK_S(false) << fmt::format("invalid pc (0x{:08X}).", pc);
+        ASSERT(false) << fmt::format("invalid pc (0x{:08X}).", pc);
       }
     } else
       break;
@@ -210,8 +210,8 @@ void Spike::step(insn_fetch_t fetch) {
       log_mem_write_queue.push_back(state->log_mem_write);
     */
 
-    LOG(INFO) << fmt::format("[spike] uarch changes detected, logged.");
+    DUMP(INFO, spike) << fmt::format("uarch changes detected, logged.");
   } else {
-    LOG(INFO) << fmt::format("[spike] uarch changes not detected for this instruction.");
+    DUMP(INFO, spike) << fmt::format("uarch changes not detected for this instruction.");
   }
 }

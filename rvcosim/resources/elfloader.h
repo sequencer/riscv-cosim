@@ -23,16 +23,16 @@ template <bool S> ElfResult load_elf(const std::string &filename, char *mem, uin
 
   elf_ehdr_t ehdr;
   fs.read(reinterpret_cast<char *>(&ehdr), sizeof(ehdr));
-  CHECK_S(ehdr.e_machine == EM_RISCV && ehdr.e_type == ET_EXEC &&
-          ehdr.e_ident[EI_CLASS] == elfclass<S>());
-  CHECK_S(ehdr.e_phentsize == sizeof(elf_phdr_t));
+  ASSERT(ehdr.e_machine == EM_RISCV && ehdr.e_type == ET_EXEC &&
+         ehdr.e_ident[EI_CLASS] == elfclass<S>());
+  ASSERT(ehdr.e_phentsize == sizeof(elf_phdr_t));
 
   for (size_t i = 0; i < ehdr.e_phnum; i++) {
     auto phdr_offset = ehdr.e_phoff + i * ehdr.e_phentsize;
     elf_phdr_t phdr;
     fs.seekg((long)phdr_offset).read(reinterpret_cast<char *>(&phdr), sizeof(phdr));
     if (phdr.p_type == PT_LOAD) {
-      CHECK_S(phdr.p_paddr + phdr.p_filesz < memsize);
+      ASSERT(phdr.p_paddr + phdr.p_filesz < memsize);
       fs.seekg((long)phdr.p_offset)
           .read(reinterpret_cast<char *>(&mem[phdr.p_paddr]), phdr.p_filesz);
     }

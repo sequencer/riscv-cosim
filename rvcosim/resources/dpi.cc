@@ -17,16 +17,16 @@
     try {                                                                                          \
       statement;                                                                                   \
     } catch (const ExitException &e) {                                                             \
-      LOG(INFO) << fmt::format("[dpi] emulator return, gracefully aborting...");                   \
+      DUMP(INFO, dpi) << fmt::format("emulator return, gracefully aborting...");                   \
       svSetScope(svGetScopeFromName("TOP.Cosim.dpiFinish"));                                       \
       finish();                                                                                    \
     } catch (const TimeoutException &e) {                                                          \
-      LOG(INFO) << fmt::format("[dpi] emulator timeout, gracefully aborting...");                  \
+      DUMP(INFO, dpi) << fmt::format("emulator timeout, gracefully aborting...");                  \
       svSetScope(svGetScopeFromName("TOP.Cosim.dpiError"));                                        \
       error("timeout");                                                                            \
     } catch (...) {                                                                                \
-      LOG(INFO) << fmt::format("[dpi] emulator detected an unknown "                               \
-                               "exception, gracefully aborting...");                               \
+      DUMP(INFO, dpi) << fmt::format(                                                              \
+          "emulator detected an unknown exception, gracefully aborting...");                       \
       svSetScope(svGetScopeFromName("TOP.Cosim.dpiError"));                                        \
       error("unknown error");                                                                      \
     }                                                                                              \
@@ -37,8 +37,8 @@ static Bridge bridge = Bridge();
 DPI void instruction_rom(IN svBitVecVal *, OUT svBitVecVal *)
     __attribute__((alias("instruction_fetch")));
 DPI void instruction_fetch(IN svBitVecVal /* <32> */ *addr, OUT svBitVecVal /* <32> */ *data) {
-  LOG(INFO) << fmt::format("[rtl] @{} fetch instruction from address 0x{:08X}.", bridge.cycle(),
-                           (uint32_t)*addr);
+  DUMP(INFO, rtl) << fmt::format("@{} fetch instruction from address 0x{:08X}.", bridge.cycle(),
+                                 (uint32_t)*addr);
   TRY({ bridge.instruction_fetch((uint32_t)*addr, (uint32_t *)data); });
 }
 
@@ -46,8 +46,8 @@ DPI void load_store(IN svBitVecVal /* 32 */ *addr, IN svBitVecVal /* 32 */ *stor
                     IN svBit write_enable, IN svBitVecVal /* 4 */ *mask_byte, OUT svBit *resp_valid,
                     OUT svBitVecVal /* 32 */ *load_data) {
   const char *action = (bool)write_enable ? "write to" : "read from";
-  LOG(INFO) << fmt::format("[rtl] @{} {} address 0x{:08X}", bridge.cycle(), action,
-                           (uint32_t)*addr);
+  DUMP(INFO, rtl) << fmt::format("@{} {} address 0x{:08X}", bridge.cycle(), action,
+                                 (uint32_t)*addr);
   if (write_enable)
     TRY({
       bridge.mem_write((uint32_t)*addr,
@@ -65,19 +65,24 @@ DPI void reg_file_write(IN svBit is_fp, IN svBit is_vector, IN svBitVecVal /* 5 
   const int n = (uint8_t)*addr;
   const uint32_t d = (uint32_t)*data;
 
-  LOG(INFO) << fmt::format("[rtl] @{} write {}#{} with data: 0x{:08X}", bridge.cycle(),
-                           reg_class_name(rc), n, d);
+  DUMP(INFO, rtl) << fmt::format("@{} write {}#{} with data: 0x{:08X}", bridge.cycle(),
+                                 reg_class_name(rc), n, d);
   TRY({ bridge.reg_write(rc, n, d); });
 }
 
+static void custom_prefix(std::ostream &s, const google::LogMessageInfo &l, void *) {
+  s << std::setfill(' ') << l.severity[0] << " " << std::setw(16)
+    << fmt::format("{}:{}", l.filename, l.line_number);
+}
+
 DPI void init_cosim() {
-  google::InitGoogleLogging("emulator");
+  google::InitGoogleLogging("emulator", &custom_prefix);
   bridge.init();
   /* register dpi wave dump, wave file will be dumped at exit. */
   svSetScope(svGetScopeFromName("TOP.Cosim.dpiDumpWave"));
   dump_wave(env("COSIM_wave"));
 
-  LOG(INFO) << fmt::format("[dpi] @{} initialized", bridge.cycle());
+  DUMP(INFO, dpi) << fmt::format("@{} initialized", bridge.cycle());
 }
 
 DPI void timeout_check() {

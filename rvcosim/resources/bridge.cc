@@ -18,8 +18,8 @@ void Bridge::mem_write(uint32_t addr, uint32_t data) {} /* TODO */
 
 void Bridge::timeout_check() {
   if (cycle() > exiting_cycle + timeout) {
-    LOG(INFO) << fmt::format(
-        "[bridge] cosim is exiting {} cycles ago, but the queue is still not empty, timed out.",
+    DUMP(INFO, bridge) << fmt::format(
+        "cosim is exiting {} cycles ago, but the queue is still not empty, timed out.",
         cycle() - exiting_cycle);
     throw TimeoutException();
   }

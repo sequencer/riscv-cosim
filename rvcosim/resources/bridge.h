@@ -14,7 +14,7 @@ public:
   ~Bridge() { delete spike; }
 
   void init() {
-    LOG(INFO) << fmt::format("[bridge] initializing");
+    DUMP(INFO, bridge) << fmt::format("initializing");
     ctx = Verilated::threadContextp();
     spike = new Spike();
   }
