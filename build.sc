@@ -49,3 +49,16 @@ trait Darkriscv
 
   def rvcosimModule = rvcosim
 }
+
+
+object picorv32 extends Picorv32
+
+trait Picorv32
+  extends common.HasRVCosimModule
+    with ScalafmtModule {
+  override def scalaVersion = T(v.scala)
+
+  override def millSourcePath = os.pwd / "picorv32"
+
+  def rvcosimModule = rvcosim
+}
