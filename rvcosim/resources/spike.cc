@@ -96,6 +96,11 @@ void Spike::reg_write(RegClass rc, int n, uint32_t data) {
     }
   }
 
+  /* remove empty commit log. */
+  if (log_reg_write_queue[0].size() == 0) {
+    log_reg_write_queue.erase(log_reg_write_queue.begin());
+  }
+
   CHECK_S(found) << fmt::format(
       "rtl write to {}#{} with value 0x{:08X} while spike doesn't recorded this change.",
       reg_class_name(rc), n, data);
@@ -162,7 +167,7 @@ void Spike::step(insn_fetch_t fetch) {
     commit_log_reset(&processor);
     pc = fetch.func(&processor, fetch.insn, state->pc);
     if (pc & 1) {
-      // some weird Spike mechanics that we need to bypass.
+      /* some weird Spike mechanics that we need to bypass. */
       switch (pc) {
       case PC_SERIALIZE_BEFORE:
         state->serialized = true;

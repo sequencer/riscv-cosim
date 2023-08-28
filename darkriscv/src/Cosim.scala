@@ -56,7 +56,9 @@ class Cosim extends RawModule {
   dpiRegFileWrite.isFp.ref := false.B
   dpiRegFileWrite.isVector.ref := false.B
   val regs = read(bore(dutInstance.darkriscv.regs))
-  val dptr = read(bore(dutInstance.darkriscv.dptr))
+  val dptr = withClockAndReset(clock.asClock, reset)(
+    RegNext(read(bore(dutInstance.darkriscv.dptr)))
+  )
   dpiRegFileWrite.data.ref := regs(dptr)
   dpiRegFileWrite.address.ref := dptr
 }
