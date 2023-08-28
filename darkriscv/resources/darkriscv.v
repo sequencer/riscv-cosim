@@ -181,7 +181,7 @@ module darkriscv
 
     // signal extended immediate, according to the instruction type:
 
-    assign XSIMM  = XRES ? 0 : 
+    assign XSIMM  = XRES ? 0 :
                      IDATA[6:0]==`SCC ? { IDATA[31] ? ALL1[31:12]:ALL0[31:12], IDATA[31:25],IDATA[11:7] } : // s-type
                      IDATA[6:0]==`BCC ? { IDATA[31] ? ALL1[31:13]:ALL0[31:13], IDATA[31],IDATA[7],IDATA[30:25],IDATA[11:8],ALL0[0] } : // b-type
                      IDATA[6:0]==`JAL ? { IDATA[31] ? ALL1[31:21]:ALL0[31:21], IDATA[31], IDATA[19:12], IDATA[20], IDATA[30:21], ALL0[0] } : // j-type
@@ -190,7 +190,7 @@ module darkriscv
                                           { IDATA[31] ? ALL1[31:12]:ALL0[31:12], IDATA[31:20] }; // i-type
         // non-signal extended immediate, according to the instruction type:
 
-    assign XUIMM  = XRES ? 0: 
+    assign XUIMM  = XRES ? 0:
                      IDATA[6:0]==`SCC ? { ALL0[31:12], IDATA[31:25],IDATA[11:7] } : // s-type
                      IDATA[6:0]==`BCC ? { ALL0[31:13], IDATA[31],IDATA[7],IDATA[30:25],IDATA[11:8],ALL0[0] } : // b-type
                      IDATA[6:0]==`JAL ? { ALL0[31:21], IDATA[31], IDATA[19:12], IDATA[20], IDATA[30:21], ALL0[0] } : // j-type
@@ -390,7 +390,7 @@ module darkriscv
                       FCT3==1 && U1REG!=U2REGX || // bne
                       FCT3==0 && U1REG==U2REGX; // beq
 
-    wire [31:0] PCSIMM = PC+SIMM;
+    wire [31:0] PCSIMM = NXPC+SIMM;
     wire        JREQ = JAL||JALR||(BCC && BMUX);
     wire [31:0] JVAL = JALR ? DADDR : PCSIMM; // SIMM + (JALR ? U1REG : PC);
 
