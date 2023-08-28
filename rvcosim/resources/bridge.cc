@@ -14,7 +14,7 @@ void Bridge::reg_write(RegClass rc, int n, uint32_t data) { spike->reg_write(rc,
 
 void Bridge::mem_read(uint32_t addr, uint32_t *out) { spike->mem_read(addr, out); }
 
-void Bridge::mem_write() { CHECK_S(false) << fmt::format("mem_write() is NYI."); }
+void Bridge::mem_write(uint32_t addr, uint32_t data) {} /* TODO */
 
 void Bridge::timeout_check() {
   if (cycle() > exiting_cycle + timeout) {

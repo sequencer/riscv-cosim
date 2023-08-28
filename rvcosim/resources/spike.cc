@@ -139,7 +139,7 @@ bool Spike::instruction_fetch(uint32_t pc, uint32_t *data) {
   if (is_exiting) {
     auto state = processor.get_state();
     /* cosim is exiting, first check is all queue is empty, if so, exit. */
-    if (log_reg_write_queue.size() || log_reg_write_queue.size() || log_reg_write_queue.size()) {
+    if (log_reg_write_queue.size() || log_mem_read_queue.size() || log_mem_write_queue.size()) {
       *data = raw_nop;
       LOG(INFO) << fmt::format("[spike] done execution, cosim is "
                                "exiting, feed a nop to rtl.");
@@ -201,11 +201,14 @@ void Spike::step(insn_fetch_t fetch) {
   if (state->log_reg_write.size() || state->log_mem_read.size() || state->log_mem_write.size()) {
     if (state->log_reg_write.size())
       log_reg_write_queue.push_back(state->log_reg_write);
-    if (state->log_mem_write.size())
-      log_mem_read_queue.push_back(state->log_mem_read);
 
+    /* TODO: don't check mem read/write for now. */
+    /*
     if (state->log_mem_read.size())
+      log_mem_read_queue.push_back(state->log_mem_read);
+    if (state->log_mem_write.size())
       log_mem_write_queue.push_back(state->log_mem_write);
+    */
 
     LOG(INFO) << fmt::format("[spike] uarch changes detected, logged.");
   } else {

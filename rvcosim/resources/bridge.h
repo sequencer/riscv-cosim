@@ -24,7 +24,7 @@ public:
   void instruction_fetch(uint32_t addr, uint32_t *data);
   void reg_write(RegClass rc, int n, uint32_t data);
   void mem_read(uint32_t addr, uint32_t *out);
-  void mem_write();
+  void mem_write(uint32_t addr, uint32_t data);
 
   void timeout_check();
 

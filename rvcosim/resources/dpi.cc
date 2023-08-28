@@ -13,22 +13,24 @@
 #define OUT
 
 #define TRY(statement)                                                                             \
-  try {                                                                                            \
-    statement;                                                                                     \
-  } catch (const ExitException &e) {                                                               \
-    LOG(INFO) << fmt::format("[dpi] emulator return, gracefully aborting...");                     \
-    svSetScope(svGetScopeFromName("TOP.Cosim.dpiFinish"));                                         \
-    finish();                                                                                      \
-  } catch (const TimeoutException &e) {                                                            \
-    LOG(INFO) << fmt::format("[dpi] emulator timeout, gracefully aborting...");                    \
-    svSetScope(svGetScopeFromName("TOP.Cosim.dpiError"));                                          \
-    error("timeout");                                                                              \
-  } catch (...) {                                                                                  \
-    LOG(INFO) << fmt::format("[dpi] emulator detected an unknown "                                 \
-                             "exception, gracefully aborting...");                                 \
-    svSetScope(svGetScopeFromName("TOP.Cosim.dpiError"));                                          \
-    error("unknown error");                                                                        \
-  }
+  do {                                                                                             \
+    try {                                                                                          \
+      statement;                                                                                   \
+    } catch (const ExitException &e) {                                                             \
+      LOG(INFO) << fmt::format("[dpi] emulator return, gracefully aborting...");                   \
+      svSetScope(svGetScopeFromName("TOP.Cosim.dpiFinish"));                                       \
+      finish();                                                                                    \
+    } catch (const TimeoutException &e) {                                                          \
+      LOG(INFO) << fmt::format("[dpi] emulator timeout, gracefully aborting...");                  \
+      svSetScope(svGetScopeFromName("TOP.Cosim.dpiError"));                                        \
+      error("timeout");                                                                            \
+    } catch (...) {                                                                                \
+      LOG(INFO) << fmt::format("[dpi] emulator detected an unknown "                               \
+                               "exception, gracefully aborting...");                               \
+      svSetScope(svGetScopeFromName("TOP.Cosim.dpiError"));                                        \
+      error("unknown error");                                                                      \
+    }                                                                                              \
+  } while (0)
 
 static Bridge bridge = Bridge();
 
@@ -47,7 +49,10 @@ DPI void load_store(IN svBitVecVal /* 32 */ *addr, IN svBitVecVal /* 32 */ *stor
   LOG(INFO) << fmt::format("[rtl] @{} {} address 0x{:08X}", bridge.cycle(), action,
                            (uint32_t)*addr);
   if (write_enable)
-    CHECK_S(false) << fmt::format("[rtl] @{} mem write is NYI.", bridge.cycle());
+    TRY({
+      bridge.mem_write((uint32_t)*addr,
+                       *(uint32_t *)store_data & expand_mask(*(uint8_t *)mask_byte));
+    });
   else
     TRY({ bridge.mem_read((uint32_t)*addr, load_data); });
 
@@ -76,5 +81,5 @@ DPI void init_cosim() {
 }
 
 DPI void timeout_check() {
-  TRY({ bridge.timeout_check(); })
+  TRY({ bridge.timeout_check(); });
 }
