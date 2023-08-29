@@ -51,6 +51,7 @@ abstract class DPIModule
 
   val trigger: String = ""
   val guard: String = ""
+  val initial: Map[String, String] = Map()
   val exportBody: String = ""
   // Magic to execute post-hook
   private[chisel3] override def generateComponent() = {
@@ -87,6 +88,8 @@ abstract class DPIModule
       s"$desiredName.sv",
       s"""module $desiredName$localDefinition;
          |${if (isImport) s"""import "DPI-C" function void $desiredName($dpiArg);""" else s"""export "DPI-C" function $desiredName;"""}
+         |${if (isImport && initial.nonEmpty) s"""import "DPI-C" function void ${desiredName}_initial(${initial.keys.mkString(", ")});""" else ""}
+         |${if (isImport && initial.nonEmpty) s"initial ${desiredName}_initial(${initial.values.mkString(", ")})" else ""}
          |${if (isImport) s"""$trigger ${if (guard.nonEmpty) s"if($guard)" else ""} $desiredName(${dpiReferences.map(_.name).mkString(", ")});""" else ""}
          |${if (!isImport) exportBody else ""}
          |endmodule
