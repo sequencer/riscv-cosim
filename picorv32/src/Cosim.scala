@@ -8,19 +8,66 @@ import rvcosim.dpi._
 
 case class CosimParameter(clockRate: Int)
 class Cosim extends RawModule {
-  // instantiate the RISC-V Core
-  val dutInstance = Module(new Picorv32SoC)
-
   // The user defined simulation parameter
   def parameter = CosimParameter(clockRate = 2)
 
   val clockGen = Module(new ClockGen(ClockGenParameter(parameter.clockRate)))
   val dpiInitCosim = Module(new InitCosim)
   val dpiTimeoutCheck = Module(new TimeoutCheck(TimeoutCheckParameter(parameter.clockRate)))
-  val dpiInstructionROM = Module(new InstructionRom(InstructionRomParameter(dutInstance.parameter.ifAddressWidth, dutInstance.parameter.ifDataWidth)))
-  val dpiLoadStore = Module(new LoadStore(LoadStoreParameter(dutInstance.parameter.ifAddressWidth, dutInstance.parameter.ifDataWidth)))
+  val dpiInstructionROM = Module(new InstructionRom(InstructionRomParameter(32, 32)))
+  val dpiLoadStore = Module(new LoadStore(LoadStoreParameter(32, 32)))
   val dpiRegFileWrite = Module(new RegFileWrite)
   val dpiDumpWave = Module(new DumpWave)
   val dpiFinish = Module(new Finish)
   val dpiError = Module(new Error)
+
+  val picorv32 = Module(new Picorv32)
+
+  val clock = read(clockGen.clock)
+  val reset = read(clockGen.reset)
+
+  // Input
+  picorv32.clock := clock.asClock
+  picorv32.resetn := !reset.asBool
+
+  // picorv32.trap
+
+  // always ready?
+  picorv32.memReady := true.B
+  picorv32.memReadData := Mux(picorv32.memInstruction, dpiInstructionROM.data.ref, dpiLoadStore.loadData.ref)
+  
+  dpiLoadStore.clock.ref := clock
+  dpiLoadStore.requestValid.ref := picorv32.memoryValid
+  dpiLoadStore.address.ref := picorv32.memAddress
+  dpiLoadStore.storeData.ref := picorv32.memWriteData
+  dpiLoadStore.writeEnable.ref := picorv32.memWriteMask.orR
+  dpiLoadStore.maskByte.ref := picorv32.memWriteMask
+  dpiInstructionROM.address.ref := picorv32.memAddress
+
+  dpiRegFileWrite.clock.ref := clock
+  dpiRegFileWrite.writeValid.ref := DontCare
+  dpiRegFileWrite.isFp.ref := false.B
+  dpiRegFileWrite.isVector.ref := false.B
+  dpiRegFileWrite.address.ref := DontCare
+  dpiRegFileWrite.data.ref := DontCare
+  // DontCare
+  // picorv32.memoryLookAheadRead
+  // picorv32.memoryLookAheadWrite
+  // picorv32.memoryLookAheadAddress
+  // picorv32.memoryLookAheadWriteData
+  // picorv32.memoryLookAheadWriteMask
+  // picorv32.picoCoProcessorInterfaceValid
+  // picorv32.picoCoProcessorInterfaceInstruction
+  // picorv32.picoCoProcessorInterfaceRs1
+  // picorv32.picoCoProcessorInterfaceRs2
+  picorv32.picoCoProcessorInterfaceWrite := false.B
+  picorv32.picoCoProcessorInterfaceRd := 0.U
+  picorv32.picoCoProcessorInterfaceWait := false.B
+  picorv32.picoCoProcessorInterfaceReady := false.B
+
+  picorv32.irq := 0.U
+  // picorv32.eoi
+  // picorv32.traceValid
+  // picorv32.traceData
+
 }
