@@ -21,6 +21,9 @@ object RunPicorv32 extends App {
   os.makeDir.all(emulatorCHeader)
   val emulatorBuildDir = emulatorDir / "build"
   os.makeDir.all(emulatorBuildDir)
+  val swDir = runDir / "sw"
+  os.makeDir.all(swDir)
+
 
   val emulatorThreads = 8
   val verilatorArgs = Seq(
@@ -30,6 +33,7 @@ object RunPicorv32 extends App {
     "--max-num-width 1048576",
     "--main",
     "--timing",
+    "--Wno-TIMESCALEMOD",
     // use for coverage
     "--coverage-user",
     "--assert",
@@ -162,4 +166,32 @@ object RunPicorv32 extends App {
 
   // build emulator
   os.proc(Seq("ninja", "-C", emulatorBuildDir).map(_.toString)).call(emulatorBuildDir)
+
+  // build smoke
+  os.write.over(swDir / "smoke.S", os.read(resources / "smoke.S"))
+  os.proc(Seq(
+    "clang-rv32",
+    "-mabi=ilp32",
+    "-march=rv32i",
+    "-mno-relax",
+    "-static",
+    "-mcmodel=medany",
+    "-fvisibility=hidden",
+    "-nostdlib",
+    "-Wl,--entry=start",
+    "-fno-PIC",
+    swDir / "smoke.S",
+    "-o",
+    swDir / "smoke.elf").map(_.toString)
+  ).call(swDir)
+
+  // run emulator
+  os.proc(Seq(
+    emulatorBuildDir / "emulator"
+  )).call(env = Map(
+    "GLOG_logtostderr" -> "1",
+    "COSIM_isa"->"rv32i",
+    "COSIM_elf"-> (swDir / "smoke.elf").toString,
+    "COSIM_wave"-> (runDir / "wave.fst").toString
+  ))
 }
