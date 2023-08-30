@@ -14,7 +14,7 @@ class Cosim extends RawModule {
   val clockGen = Module(new ClockGen(ClockGenParameter(parameter.clockRate)))
   val dpiInitCosim = Module(new InitCosim)
   val dpiTimeoutCheck = Module(new TimeoutCheck(TimeoutCheckParameter(parameter.clockRate)))
-  val dpiInstructionROM = Module(new InstructionRom(InstructionRomParameter(32, 32)))
+  val dpiInstructionFetch = Module(new InstructionFetch(InstructionFetchParameter(32, 32)))
   val dpiLoadStore = Module(new LoadStore(LoadStoreParameter(32, 32)))
   val dpiRegFileWrite = Module(new RegFileWrite)
   val dpiDumpWave = Module(new DumpWave)
@@ -34,22 +34,25 @@ class Cosim extends RawModule {
 
   // always ready?
   picorv32.memReady := true.B
-  picorv32.memReadData := Mux(picorv32.memInstruction, dpiInstructionROM.data.ref, dpiLoadStore.loadData.ref)
-  
+  picorv32.memReadData := Mux(picorv32.memInstruction, dpiInstructionFetch.data.ref, dpiLoadStore.loadData.ref)
+
   dpiLoadStore.clock.ref := clock
-  dpiLoadStore.requestValid.ref := picorv32.memoryValid
+  dpiLoadStore.requestValid.ref := picorv32.memoryValid && !picorv32.memInstruction
   dpiLoadStore.address.ref := picorv32.memAddress
   dpiLoadStore.storeData.ref := picorv32.memWriteData
   dpiLoadStore.writeEnable.ref := picorv32.memWriteMask.orR
   dpiLoadStore.maskByte.ref := picorv32.memWriteMask
-  dpiInstructionROM.address.ref := picorv32.memAddress
+
+  dpiInstructionFetch.clock.ref := clock
+  dpiInstructionFetch.requestValid.ref := picorv32.memoryValid && picorv32.memInstruction
+  dpiInstructionFetch.address.ref := picorv32.memAddress
 
   dpiRegFileWrite.clock.ref := clock
-  dpiRegFileWrite.writeValid.ref := DontCare
+  dpiRegFileWrite.writeValid.ref := read(bore(picorv32.cpuRegsWrite))
   dpiRegFileWrite.isFp.ref := false.B
   dpiRegFileWrite.isVector.ref := false.B
-  dpiRegFileWrite.address.ref := DontCare
-  dpiRegFileWrite.data.ref := DontCare
+  dpiRegFileWrite.address.ref := read(bore(picorv32.latchedRd))
+  dpiRegFileWrite.data.ref := read(bore(picorv32.cpuRegsWriteData))
   // DontCare
   // picorv32.memoryLookAheadRead
   // picorv32.memoryLookAheadWrite

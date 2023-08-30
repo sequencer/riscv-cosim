@@ -11,7 +11,7 @@ class Picorv32 extends ExtModule with HasExtModuleResource with HasExtModuleDefi
   override val params = Map(
     "ENABLE_COUNTERS" -> IntParam(0),
     "ENABLE_COUNTERS64" -> IntParam(0),
-    "ENABLE_REGS_16_31" -> IntParam(0),
+    "ENABLE_REGS_16_31" -> IntParam(1),
     "ENABLE_REGS_DUALPORT" -> IntParam(0),
     "LATCHED_MEM_RDATA" -> IntParam(0),
     "TWO_STAGE_SHIFT" -> IntParam(1),
@@ -102,4 +102,8 @@ class Picorv32 extends ExtModule with HasExtModuleResource with HasExtModuleDefi
   val traceValid = IO(Output(Bool())).suggestName("trace_valid")
   //  output [35:0] trace_data
   val traceData = IO(Output(UInt(36.W))).suggestName("trace_data")
+
+  val latchedRd = define(Probe(UInt(5.W)), Seq("picorv32", "picorv32", "latched_rd"))
+  val cpuRegsWrite = define(Probe(Bool()), Seq("picorv32", "picorv32", "cpuregs_write"))
+  val cpuRegsWriteData = define(Probe(UInt(32.W)), Seq("picorv32", "picorv32", "cpuregs_wrdata"))
 }
