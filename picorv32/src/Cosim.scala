@@ -56,19 +56,37 @@ class Cosim extends RawModule {
   dpiRegFileWrite.address.ref := read(bore(picorv32.latchedRd))
   dpiRegFileWrite.data.ref := read(bore(picorv32.cpuRegsWriteData))
   dpiIssue.clock.ref := clock
-  dpiIssue.valid.ref := read(bore(picorv32.cpuState))(5, 0).orR
-  dpiIssue.pc.ref := read(bore(picorv32.pc))
+  dpiIssue.valid.ref := read(bore(picorv32.launchNextInsn))
+  dpiIssue.pc.ref := read(bore(picorv32.nextPc))
 
   dpiRetire.clock.ref := clock
+  //
   dpiRetire.valid.ref :=
     // line 1800
-    ((read(bore(picorv32.cpuState)) === "0b00001000".U) &&
-     ((read(bore(picorv32.memDone)) && read(bore(picorv32.isBranch))) ||
-      !read(bore(picorv32.isBranch))))
+    (
+      (read(bore(picorv32.cpuState)) === "b00001000".U) &&
+        (
+          (read(bore(picorv32.memDone)) && read(bore(picorv32.isBranch))) ||
+          !read(bore(picorv32.isBranch))
+          )
+      ) ||
   // 1824
+      (
+        (read(bore(picorv32.cpuState)) === "b00000100".U) &&
+          (read(bore(picorv32.regSh)) === 0.U)
+        ) ||
   // 1849
+      (
+        (read(bore(picorv32.cpuState)) === "b00000010".U) &&
+          (read(bore(picorv32.memDone))) && ! (read(bore(picorv32.memDoPrefetch)))
+        ) ||
   // 1875
-  dpiRetire.pc.ref := read(bore(picorv32.pc))
+      (
+        (read(bore(picorv32.cpuState)) === "b00000001".U) &&
+          (read(bore(picorv32.memDone))) && !(read(bore(picorv32.memDoPrefetch)))
+        )
+
+  dpiRetire.pc.ref := read(bore(picorv32.currentPc))
 
 
   // DontCare
