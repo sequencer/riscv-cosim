@@ -18,7 +18,7 @@ class Cosim extends RawModule {
   val dpiLoadStore = Module(new LoadStore(LoadStoreParameter(32, 32)))
   val dpiRegFileWrite = Module(new RegFileWrite)
   val dpiIssue = Module(new Issue)
-  val dpiRetire = Module(new Issue)
+  val dpiRetire = Module(new Retire)
   val dpiDumpWave = Module(new DumpWave)
   val dpiFinish = Module(new Finish)
   val dpiError = Module(new Error)
@@ -62,11 +62,9 @@ class Cosim extends RawModule {
   dpiRetire.clock.ref := clock
   dpiRetire.valid.ref :=
     // line 1800
-    (
-      (read(bore(picorv32.cpuState)) === "0b00001000".U) &&
-        (read(bore(picorv32.memDone)) && read(bore(picorv32.isBranch))) &&
-        !read(bore(picorv32.isBranch))
-      )
+    ((read(bore(picorv32.cpuState)) === "0b00001000".U) &&
+     ((read(bore(picorv32.memDone)) && read(bore(picorv32.isBranch))) ||
+      !read(bore(picorv32.isBranch))))
   // 1824
   // 1849
   // 1875

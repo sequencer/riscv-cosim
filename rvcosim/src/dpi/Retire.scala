@@ -1,4 +1,4 @@
-package dpi
+package rvcosim.dpi
 
 import chisel3._
 

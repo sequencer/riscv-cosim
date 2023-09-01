@@ -22,9 +22,11 @@ public:
 
   /* --- bridges --- */
   void instruction_fetch(uint32_t addr, uint32_t *data);
+  void issue(uint32_t pc);
   void reg_write(RegClass rc, int n, uint32_t data);
   void mem_read(uint32_t addr, uint32_t *out);
   void mem_write(uint32_t addr, uint32_t data);
+  void retire(uint32_t pc);
 
   void timeout_check();
 

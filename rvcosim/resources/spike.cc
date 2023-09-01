@@ -10,6 +10,8 @@ static const uint32_t reset_vector_addr = 0;
 
 static const uint32_t raw_nop = 0x13;
 
+static const int let_it_run_threshold = 10;
+
 Spike::Spike()
     : sim(1 << (10 + 10 + 6)), /* 64M memory should be enough for now. */
       isa_parser(env("COSIM_isa"), "M"),
@@ -96,11 +98,6 @@ void Spike::reg_write(RegClass rc, int n, uint32_t data) {
     }
   }
 
-  /* remove empty commit log. */
-  if (log_reg_write_queue[0].size() == 0) {
-    log_reg_write_queue.erase(log_reg_write_queue.begin());
-  }
-
   ASSERT(found) << fmt::format(
       "rtl write to {}#{} with value 0x{:08X} while spike doesn't recorded this change.",
       reg_class_name(rc), n, data);
@@ -113,43 +110,58 @@ void Spike::mem_read(uint32_t addr, uint32_t *out) {
                                    addr, *out);
 }
 
-bool Spike::instruction_fetch(uint32_t pc, uint32_t *data) {
+void Spike::retire(uint32_t pc) {
+  bool is_exiting = processor.get_csr(CSR_MSIMEND);
+  auto spike_fetch = processor.get_mmu()->load_insn(pc);
+
+  DUMP(INFO, spike) << fmt::format(
+      "retired 0x{:08X} ({}) from address 0x{:08X}.", spike_fetch.insn.bits(),
+      processor.get_disassembler()->disassemble(spike_fetch.insn), (reg_t)pc);
+
+  /* remove empty commit log. */
+  /* TODO: memory read / write. */
+  /* TODO: better log, e.g. show pending changes in detail. */
+  ASSERT(log_reg_write_queue[0].size() == 0)
+      << fmt::format("rtl retired the instruction while spike still have some pending changes.");
+  log_reg_write_queue.erase(log_reg_write_queue.begin());
+
+  if (is_exiting) {
+    auto state = processor.get_state();
+    /* cosim is exiting, first check is all queue is empty, if so, exit. */
+    if (log_reg_write_queue.size() || log_mem_read_queue.size() || log_mem_write_queue.size() ||
+        let_it_run++ < let_it_run_threshold)
+      DUMP(INFO, spike) << fmt::format("done execution, cosim is in exiting mode.");
+    else
+      throw ExitException(); /* gracefully exit. */
+  }
+}
+
+void Spike::instruction_fetch(uint32_t pc, uint32_t *data) {
+  auto spike_fetch = processor.get_mmu()->load_insn(pc);
+  bool is_exiting = processor.get_csr(CSR_MSIMEND);
+  uint32_t spike_raw_insn = is_exiting ? raw_nop : spike_fetch.insn.bits();
+  DUMP(INFO, spike) << fmt::format(
+      "fetched 0x{:08X} ({}) from address 0x{:08X}.", spike_raw_insn,
+      processor.get_disassembler()->disassemble(insn_t(spike_raw_insn)), (reg_t)pc);
+
+  *data = spike_raw_insn;
+}
+
+bool Spike::issue(uint32_t pc) {
   auto spike_state = processor.get_state();
   reg_t spike_pc = spike_state->pc;
   auto spike_fetch = processor.get_mmu()->load_insn(spike_pc);
   bool is_exiting = processor.get_csr(CSR_MSIMEND);
 
-  uint32_t spike_raw_insn = is_exiting ? raw_nop : spike_fetch.insn.bits();
-
   ASSERT(pc == spike_pc) << fmt::format(
-      "fetching instruction from 0x{:08X} while rtl is fetching from 0x{:08X}.", spike_pc, pc);
-
-  DUMP(INFO, spike) << fmt::format(
-      "fetched 0x{:08X} ({}) from address 0x{:08X}.", spike_raw_insn,
-      processor.get_disassembler()->disassemble(insn_t(spike_raw_insn)), spike_pc);
+      "issue instruction from pc 0x{:08X} while rtl is issuing from pc 0x{:08X}.", spike_pc, pc);
 
   if (is_exiting)
     spike_state->pc += 4;
   else
     step(spike_fetch);
 
-  /* after spike execution, check if cosim is exiting. if so, feed rtl with a
-   * nop to let it continue. */
   is_exiting = processor.get_csr(CSR_MSIMEND);
-  if (is_exiting) {
-    auto state = processor.get_state();
-    /* cosim is exiting, first check is all queue is empty, if so, exit. */
-    if (log_reg_write_queue.size() || log_mem_read_queue.size() || log_mem_write_queue.size()) {
-      *data = raw_nop;
-      DUMP(INFO, spike) << fmt::format("done execution, cosim is "
-                                       "exiting, feed a nop to rtl.");
-    } else
-      throw ExitException(); /* gracefully exit. */
-  } else {
-    *data = spike_raw_insn;
-    DUMP(INFO, spike) << fmt::format("done execution, feed fetched instruction to rtl.");
-  }
-
   return is_exiting;
 }
 
@@ -198,20 +210,15 @@ void Spike::step(insn_fetch_t fetch) {
   }
 
   /* record uarch changes. */
-  if (state->log_reg_write.size() || state->log_mem_read.size() || state->log_mem_write.size()) {
-    if (state->log_reg_write.size())
-      log_reg_write_queue.push_back(state->log_reg_write);
+  /* TODO: don't check mem read/write for now. */
+  log_reg_write_queue.push_back(state->log_reg_write);
+  /*
+    log_mem_read_queue.push_back(state->log_mem_read);
+    log_mem_write_queue.push_back(state->log_mem_write);
+  */
 
-    /* TODO: don't check mem read/write for now. */
-    /*
-    if (state->log_mem_read.size())
-      log_mem_read_queue.push_back(state->log_mem_read);
-    if (state->log_mem_write.size())
-      log_mem_write_queue.push_back(state->log_mem_write);
-    */
-
+  if (state->log_reg_write.size() || state->log_mem_read.size() || state->log_mem_write.size())
     DUMP(INFO, spike) << fmt::format("uarch changes detected, logged.");
-  } else {
+  else
     DUMP(INFO, spike) << fmt::format("uarch changes not detected for this instruction.");
-  }
 }

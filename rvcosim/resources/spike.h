@@ -12,9 +12,11 @@ class Spike {
 public:
   Spike();
 
+  void instruction_fetch(uint32_t pc, uint32_t *data);
+  bool issue(uint32_t pc);
   void reg_write(RegClass rc, int n, uint32_t data);
   void mem_read(uint32_t addr, uint32_t *out);
-  bool instruction_fetch(uint32_t pc, uint32_t *data);
+  void retire(uint32_t pc);
 
 private:
   /* step Spike forward and log arch changes. */
@@ -27,6 +29,9 @@ private:
   cfg_t cfg;
   processor_t processor;
   cosim_extension_t custom;
+
+  // keep cosim running even after exited, for better wave generation.
+  int let_it_run = 0;
 
   std::vector<commit_log_reg_t> log_reg_write_queue;
   std::vector<commit_log_mem_t> log_mem_read_queue;

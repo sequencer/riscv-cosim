@@ -114,8 +114,8 @@ class Picorv32 extends ExtModule with HasExtModuleResource with HasExtModuleDefi
   // cpu_state_shift  = 8'b00000100;
   // cpu_state_stmem  = 8'b00000010;
   // cpu_state_ldmem  = 8'b00000001;
-  val cpuState = define(Probe(UInt(7.W)), Seq("picorv32", "picorv32", "cpu_state"))
-  val pc = define(Probe(UInt(7.W)), Seq("picorv32", "picorv32", "reg_pc"))
+  val cpuState = define(Probe(UInt(8.W)), Seq("picorv32", "picorv32", "cpu_state"))
+  val pc = define(Probe(UInt(32.W)), Seq("picorv32", "picorv32", "reg_pc"))
   val memDone = define(Probe(Bool()), Seq("picorv32", "picorv32", "mem_done"))
   val isBranch = define(Probe(Bool()), Seq("picorv32", "picorv32", "is_beq_bne_blt_bge_bltu_bgeu"))
 }

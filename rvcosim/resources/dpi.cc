@@ -37,9 +37,21 @@ static Bridge bridge = Bridge();
 DPI void instruction_rom(IN svBitVecVal *, OUT svBitVecVal *)
     __attribute__((alias("instruction_fetch")));
 DPI void instruction_fetch(IN svBitVecVal /* <32> */ *addr, OUT svBitVecVal /* <32> */ *data) {
-  DUMP(INFO, rtl) << fmt::format("@{} fetch instruction from address 0x{:08X}.", bridge.cycle(),
+  DUMP(INFO, rtl) << fmt::format("@{} fetch instruction from pc 0x{:08X}.", bridge.cycle(),
                                  (uint32_t)*addr);
   TRY({ bridge.instruction_fetch((uint32_t)*addr, (uint32_t *)data); });
+}
+
+DPI void issue(IN svBitVecVal /* <32> */ *pc) {
+  DUMP(INFO, rtl) << fmt::format("@{} issue instruction from pc 0x{:08X}.", bridge.cycle(),
+                                 (uint32_t)*pc);
+  TRY({ bridge.issue((uint32_t)*pc); });
+}
+
+DPI void retire(IN svBitVecVal /* <32> */ *pc) {
+  DUMP(INFO, rtl) << fmt::format("@{} retire instruction from pc 0x{:08X}.", bridge.cycle(),
+                                 (uint32_t)*pc);
+  TRY({ bridge.retire((uint32_t)*pc); });
 }
 
 DPI void load_store(IN svBitVecVal /* 32 */ *addr, IN svBitVecVal /* 32 */ *store_data,
