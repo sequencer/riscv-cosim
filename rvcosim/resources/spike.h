@@ -16,7 +16,6 @@ public:
   bool issue(uint32_t pc);
   void reg_write(RegClass rc, int n, uint32_t data);
   void mem_read(uint32_t addr, uint32_t *out);
-  void retire(uint32_t pc);
 
 private:
   /* step Spike forward and log arch changes. */

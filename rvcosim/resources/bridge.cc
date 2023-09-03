@@ -1,7 +1,7 @@
 #include "bridge.h"
 #include "exceptions.h"
 
-constexpr int64_t timeout = 10;
+constexpr int64_t timeout = 100000;
 
 void Bridge::instruction_fetch(uint32_t addr, uint32_t *data) {
   spike->instruction_fetch(addr, data);
@@ -18,8 +18,6 @@ void Bridge::reg_write(RegClass rc, int n, uint32_t data) { spike->reg_write(rc,
 void Bridge::mem_read(uint32_t addr, uint32_t *out) { spike->mem_read(addr, out); }
 
 void Bridge::mem_write(uint32_t addr, uint32_t data) {} /* TODO */
-
-void Bridge::retire(uint32_t pc) { spike->retire(pc); }
 
 void Bridge::timeout_check() {
   if (cycle() > exiting_cycle + timeout) {

@@ -13,7 +13,9 @@ next:
     lw      a0, 0(a0)
     la      a1, data
     sw      a0, 0(a1)
-    j       data
+    bne     x3, x4, 1f
+    j       next
+1:  j       data
 
 exit:
     .word 0x0000007f # cosim exit instruction.

@@ -48,12 +48,6 @@ DPI void issue(IN svBitVecVal /* <32> */ *pc) {
   TRY({ bridge.issue((uint32_t)*pc); });
 }
 
-DPI void retire(IN svBitVecVal /* <32> */ *pc) {
-  DUMP(INFO, rtl) << fmt::format("@{} retire instruction from pc 0x{:08X}.", bridge.cycle(),
-                                 (uint32_t)*pc);
-  TRY({ bridge.retire((uint32_t)*pc); });
-}
-
 DPI void load_store(IN svBitVecVal /* 32 */ *addr, IN svBitVecVal /* 32 */ *store_data,
                     IN svBit write_enable, IN svBitVecVal /* 4 */ *mask_byte, OUT svBit *resp_valid,
                     OUT svBitVecVal /* 32 */ *load_data) {
