@@ -18,7 +18,7 @@ class Cosim extends RawModule {
   val dpiLoadStore = Module(new LoadStore(LoadStoreParameter(32, 32)))
   val dpiRegFileWrite = Module(new RegFileWrite)
   val dpiIssue = Module(new Issue)
-  val dpiRetire = Module(new Retire)
+  // val dpiRetire = Module(new Retire)
   val dpiDumpWave = Module(new DumpWave)
   val dpiFinish = Module(new Finish)
   val dpiError = Module(new Error)
@@ -59,35 +59,34 @@ class Cosim extends RawModule {
   dpiIssue.valid.ref := read(bore(picorv32.launchNextInsn))
   dpiIssue.pc.ref := read(bore(picorv32.nextPc))
 
-  dpiRetire.clock.ref := clock
+  // dpiRetire.clock.ref := clock
   //
-  dpiRetire.valid.ref :=
-    // line 1800
-    (
-      (read(bore(picorv32.cpuState)) === "b00001000".U) &&
-        (
-          (read(bore(picorv32.memDone)) && read(bore(picorv32.isBranch))) ||
-          !read(bore(picorv32.isBranch))
-          )
-      ) ||
-  // 1824
-      (
-        (read(bore(picorv32.cpuState)) === "b00000100".U) &&
-          (read(bore(picorv32.regSh)) === 0.U)
-        ) ||
-  // 1849
-      (
-        (read(bore(picorv32.cpuState)) === "b00000010".U) &&
-          (read(bore(picorv32.memDone))) && ! (read(bore(picorv32.memDoPrefetch)))
-        ) ||
-  // 1875
-      (
-        (read(bore(picorv32.cpuState)) === "b00000001".U) &&
-          (read(bore(picorv32.memDone))) && !(read(bore(picorv32.memDoPrefetch)))
-        )
-
-  dpiRetire.pc.ref := read(bore(picorv32.currentPc))
-
+  // dpiRetire.valid.ref :=
+  //   // line 1800
+  //   (
+  //     (read(bore(picorv32.cpuState)) === "b00001000".U) &&
+  //       (
+  //         (read(bore(picorv32.memDone)) && read(bore(picorv32.isBranch))) ||
+  //         !read(bore(picorv32.isBranch))
+  //         )
+  //     ) ||
+  // // 1824
+  //     (
+  //       (read(bore(picorv32.cpuState)) === "b00000100".U) &&
+  //         (read(bore(picorv32.regSh)) === 0.U)
+  //       ) ||
+  // // 1849
+  //     (
+  //       (read(bore(picorv32.cpuState)) === "b00000010".U) &&
+  //         (read(bore(picorv32.memDone))) && ! (read(bore(picorv32.memDoPrefetch)))
+  //       ) ||
+  // // 1875
+  //     (
+  //       (read(bore(picorv32.cpuState)) === "b00000001".U) &&
+  //         (read(bore(picorv32.memDone))) && !(read(bore(picorv32.memDoPrefetch)))
+  //       )
+//
+  // dpiRetire.pc.ref := read(bore(picorv32.regNextPc))
 
   // DontCare
   // picorv32.memoryLookAheadRead
