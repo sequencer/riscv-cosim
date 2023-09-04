@@ -17,7 +17,7 @@ class Cosim extends RawModule {
   val dpiInstructionFetch = Module(new InstructionFetch(InstructionFetchParameter(32, 32)))
   val dpiLoadStore = Module(new LoadStore(LoadStoreParameter(32, 32)))
   val dpiRegFileWrite = Module(new RegFileWrite)
-  val dpiIssue = Module(new Issue)
+  val dpiIssue = Module(new Issue(IssueParameter(32)))
   // val dpiRetire = Module(new Retire)
   val dpiDumpWave = Module(new DumpWave)
   val dpiFinish = Module(new Finish)
@@ -57,7 +57,7 @@ class Cosim extends RawModule {
   dpiRegFileWrite.data.ref := read(bore(picorv32.cpuRegsWriteData))
   dpiIssue.clock.ref := clock
   dpiIssue.valid.ref := read(bore(picorv32.launchNextInsn))
-  dpiIssue.pc.ref := read(bore(picorv32.nextPc))
+  dpiIssue.address.ref := read(bore(picorv32.nextPc))
 
   // dpiRetire.clock.ref := clock
   //

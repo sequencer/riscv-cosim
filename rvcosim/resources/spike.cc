@@ -138,11 +138,12 @@ bool Spike::issue(uint32_t pc) {
   spike_raw_insn = spike_raw_insn == 0x0000007f ? raw_nop : spike_raw_insn;
 
   ASSERT(pc == spike_pc) << fmt::format(
-      "issue instruction from pc 0x{:08X} while rtl is issuing from pc 0x{:08X}.", spike_pc, pc);
+      "spike issued instruction from pc 0x{:08X} while rtl is issuing from pc 0x{:08X}.", spike_pc,
+      pc);
 
   DUMP(INFO, spike) << fmt::format(
-      "issued instruction from pc 0x{:08X}, which should be 0x{:08X} ({}).", spike_pc,
-      spike_raw_insn, processor.get_disassembler()->disassemble(insn_t(spike_raw_insn)));
+      "issued  0x{:08X} ({}) from pc 0x{:08X}.", spike_raw_insn,
+      processor.get_disassembler()->disassemble(insn_t(spike_raw_insn)), spike_pc);
 
   if (is_exiting)
     spike_state->pc += 4;
@@ -216,7 +217,7 @@ void Spike::step(insn_fetch_t fetch) {
     log_reg_write_queue.push_back(log_reg_write);
     DUMP(INFO, spike) << fmt::format("uarch changes detected, logged:");
     for (auto item : log_reg_write_queue.back()) {
-      DUMP(INFO, spike) << fmt::format(">>> reg write recorded {}#0x{:08X}: 0x{:08X}.",
+      DUMP(INFO, spike) << fmt::format(">>> reg write recorded {}#{}: 0x{:08X}.",
                                        reg_class_name(RegClass(item.first & 0xf)), item.first >> 4,
                                        (uint32_t)item.second.v[0]);
       DUMP(INFO, spike) << fmt::format("this is the {}th entry in reg write queue.",
