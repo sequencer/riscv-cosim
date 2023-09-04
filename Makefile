@@ -4,4 +4,4 @@ picorv32: init
 init:
 	git submodule update --init
 
-.PHONY: build run
+.PHONY: picorv32 init
