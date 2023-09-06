@@ -23,6 +23,8 @@ object RunPicorv32 extends App {
   os.makeDir.all(emulatorBuildDir)
   val swDir = runDir / "sw"
   os.makeDir.all(swDir)
+  val releaseDir = os.pwd / "release"
+  os.makeDir.all(releaseDir)
 
 
   val emulatorThreads = 8
@@ -74,6 +76,7 @@ object RunPicorv32 extends App {
     "--split-verilog",
     "--preserve-values=none",
     "--preserve-aggregate=all",
+    "--lowering-options=omitVersionComment",
     "--strip-debug-info",
     s"-o=$rtlDir"
   ).call()
@@ -144,7 +147,7 @@ object RunPicorv32 extends App {
        |
        |verilate(emulator
        |  SOURCES
-       |  ${verilogs.mkString("\n")}
+       |${verilogs.mkString("\n")}
        |  "TRACE_FST"
        |  TOP_MODULE $topName
        |  PREFIX V$topName
@@ -194,4 +197,24 @@ object RunPicorv32 extends App {
     "COSIM_elf"-> (swDir / "smoke.elf").toString,
     "COSIM_wave"-> (runDir / "wave.fst").toString
   ))
+
+  // release
+  os.remove.all(releaseDir)
+  os.makeDir.all(releaseDir / "vsrc")
+  verilogs.foreach(f => os.copy.into(f, releaseDir / "vsrc"))
+  os.makeDir.all(releaseDir / "csrc")
+  (allCSourceFiles ++ allCHeaderFiles).foreach(f => os.copy.into(f, releaseDir / "csrc"))
+  os.copy.into(os.pwd / "nix", releaseDir)
+  os.copy.into(os.pwd / "flake.nix", releaseDir)
+  os.copy.into(os.pwd / "flake.lock", releaseDir)
+  os.copy.into(os.pwd / "overlay.nix", releaseDir)
+  // some post fixes
+  os.write(releaseDir / "CMakeLists.txt", os.read.lines(emulatorBuildDir / "CMakeLists.txt")
+    .map(_.replace(emulatorCSrc.toString, "csrc"))
+    .map(_.replace(emulatorCHeader.toString, "csrc"))
+    .map(_.replace(rtlDir.toString, "vsrc"))
+    .mkString("\n")
+  )
+  os.proc("tar", "cvf", os.pwd / "release.tar.xz", "release").call(os.pwd)
+
 }
