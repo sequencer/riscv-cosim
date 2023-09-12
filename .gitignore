@@ -3,3 +3,5 @@
 out/
 run/
 .vscode/
+release/
+release.tar.xz
